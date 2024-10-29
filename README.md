@@ -1,3 +1,5 @@
+This repo is forked from [BluetileEntertainment/LibretroDroid](https://github.com/BluetileEntertainment/LibretroDroid)
+
 # LibretroDroid
 LibretroDroid is a simple C++ LibRetro frontend library for Android. It's powering [Lemuroid](https://github.com/Swordfish90/Lemuroid).
 
