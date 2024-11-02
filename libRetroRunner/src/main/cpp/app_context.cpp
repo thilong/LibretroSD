@@ -15,9 +15,16 @@ namespace libRetroRunner {
         return nullptr;
     }
 
+
+    AppContext *AppContext::NewInstance() {
+        instance =  std::make_unique<AppContext>();
+        return instance.get();
+    }
+
+
     AppContext::AppContext() {
         state = AppState::INIT;
-        instance = std::unique_ptr<AppContext>(this);
+
     }
 
     AppContext::~AppContext() {
@@ -75,6 +82,7 @@ namespace libRetroRunner {
         while (commands.try_pop(command)) {
             switch (command) {
                 case AppCommands::kLoadCore:
+                    loadCore();
                     break;
                 case AppCommands::kNone:
                 default:

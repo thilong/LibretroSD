@@ -40,5 +40,10 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
         NativeRunner.setSurface(null);
     }
 
+    public void startEmu(){
 
+    }
+    public void stopEmu(){
+
+    }
 }

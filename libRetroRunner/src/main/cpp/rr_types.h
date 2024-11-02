@@ -15,8 +15,8 @@ struct Variable {
 };
 
 enum AppCommands {
-    kNone = 0,
-    kLoadCore = 1 ,
+    kNone = 10,
+    kLoadCore,
 
 };
 

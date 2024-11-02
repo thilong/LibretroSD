@@ -49,6 +49,7 @@ namespace libRetroRunner {
         void ThreadLoop();
 
     public:
+        static AppContext *NewInstance();
         static AppContext *Instance() {
             return instance.get();
         };
