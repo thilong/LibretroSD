@@ -8,3 +8,4 @@ app/*.iml
 local.properties
 .cxx/*
 .cxx
+**/libflycast.so

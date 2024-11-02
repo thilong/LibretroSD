@@ -47,9 +47,21 @@ class SampleActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.sample_activity)
-
-        val gamePath = getExternalFilesDir(null)?.absolutePath + "a.nes"
-        FileUtil.copyFromAsses(this,"demo.nes",gamePath)
+        val testNes = false
+        var gamePath = ""
+        var coreFile = ""
+        if(testNes){
+            coreFile = "libfceumm.so"
+            gamePath = filesDir.absolutePath + "/demo.nes"
+            FileUtil.copyFromAsses(this,"demo.nes",gamePath)
+        }else {
+            coreFile = "libflycast.so"
+            //coreFile = "libppsspp.so"
+            gamePath = filesDir.absolutePath + "/roms/bj.cdi"
+            //gamePath = filesDir.absolutePath + "/roms/fl.iso"
+        }
+        //val gamePath = getExternalFilesDir(null)?.absolutePath + "a.nes"
+        //FileUtil.copyFromAsses(this,"demo.nes",gamePath)
         /* Prepare config for GLRetroView */
         val data = GLRetroViewData(this).apply {
             /*
@@ -59,7 +71,7 @@ class SampleActivity : AppCompatActivity() {
              *
              * ABI can be arm64-v8a, armeabi-v7a, x86, or x86_64
              */
-            coreFilePath = "libfceumm_libretro_android.so"
+            coreFilePath = coreFile
 
             /*
              * The path to the ROM to load.

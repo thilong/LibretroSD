@@ -65,12 +65,10 @@ public:
     void updateShaderType(ShaderManager::Config shaderConfig);
 
     void renderFrame();
-
+    void renderFrameWithoutShader();
     void onNewFrame(const void *data, unsigned width, unsigned height, size_t pitch);
 
-    uintptr_t getCurrentFramebuffer() {
-        return renderer->getFramebuffer();
-    };
+    uintptr_t getCurrentFramebuffer();
 
     bool rendersInVideoCallback() {
         return renderer->rendersInVideoCallback();
