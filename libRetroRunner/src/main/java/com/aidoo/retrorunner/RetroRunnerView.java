@@ -21,7 +21,7 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
         setupView();
     }
 
-    private void setupView(){
+    private void setupView() {
         getHolder().addCallback(this);
     }
 
@@ -40,10 +40,29 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
         NativeRunner.setSurface(null);
     }
 
-    public void startEmu(){
 
+    public void startEmu(RunConfig config) {
+        NativeRunner.create(config.getRomPath(), config.getCorePath(), config.getSystemPath(), config.getSavePath());
+        if (config.haveVariables()) {
+            NativeRunner.setVariables(, config.getVariables(), );
+        }
+        NativeRunner.start();
     }
-    public void stopEmu(){
 
+    public void stopEmu() {
+        NativeRunner.stop();
     }
+
+    public void pauseEmu(boolean pause) {
+        if (pause) {
+            NativeRunner.pause();
+        } else {
+            NativeRunner.resume();
+        }
+    }
+
+    public void resetEmu() {
+        NativeRunner.reset();
+    }
+
 }

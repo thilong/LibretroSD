@@ -53,7 +53,7 @@ namespace libRetroRunner {
         static AppContext *Instance() {
             return instance.get();
         };
-
+         Environment* GetEnvironment() const;
 
     private:
         void processCommand();

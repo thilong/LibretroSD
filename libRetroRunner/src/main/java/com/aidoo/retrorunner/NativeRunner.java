@@ -2,8 +2,6 @@ package com.aidoo.retrorunner;
 
 import android.view.Surface;
 
-import java.util.HashMap;
-
 public class NativeRunner {
     static {
         System.loadLibrary("RetroRunner");
@@ -29,7 +27,7 @@ public class NativeRunner {
     public static native void create(String romPath, String corePath, String systemPath, String savePath);
 
     /*设置模拟的初始变量*/
-    public static native void setVariables(HashMap<String, String> variables);
+    public static native void setVariables(String key, String value);
 
     /*开始模拟*/
     public static native void start();

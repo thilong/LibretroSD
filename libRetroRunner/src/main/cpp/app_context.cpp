@@ -17,8 +17,12 @@ namespace libRetroRunner {
 
 
     AppContext *AppContext::NewInstance() {
-        instance =  std::make_unique<AppContext>();
+        instance = std::make_unique<AppContext>();
         return instance.get();
+    }
+
+    Environment *AppContext::GetEnvironment() const {
+        return environment.get();
     }
 
 

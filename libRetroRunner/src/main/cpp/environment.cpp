@@ -11,7 +11,7 @@
 
 namespace libRetroRunner {
     void Environment::UpdateVariable(const std::string &key, const std::string &value, bool notifyCore) {
-
+        
     }
 
     Environment::Environment() {

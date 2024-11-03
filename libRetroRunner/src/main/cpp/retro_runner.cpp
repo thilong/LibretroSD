@@ -1,6 +1,8 @@
 #include <jni.h>
 #include "app_context.h"
 #include "utils/jnistring.h"
+#include "app_context.h"
+#include "environment.h"
 
 namespace libRetroRunner {
     JavaVM *gVm = nullptr;
@@ -45,14 +47,21 @@ Java_com_aidoo_retrorunner_NativeRunner_setSurfaceSize(JNIEnv *env, jclass clazz
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aidoo_retrorunner_NativeRunner_setVariables(JNIEnv *env, jclass clazz, jobject variables) {
-
+Java_com_aidoo_retrorunner_NativeRunner_setVariables(JNIEnv *env, jclass clazz, jstring key, jstring value) {
+    auto appContext = libRetroRunner::AppContext::Instance();
+    if (appContext == nullptr) return;
+    libRetroRunner::Environment *environment = appContext->GetEnvironment();
+    if (environment == nullptr) return;
+    JString keyVal(env,key);
+    JString valueVal(env,key);
+    environment->UpdateVariable(keyVal.stdString(), valueVal.stdString());
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_aidoo_retrorunner_NativeRunner_start(JNIEnv *env, jclass clazz) {
-
+    libRetroRunner::AppContext* appContext = libRetroRunner::AppContext::Instance();
+    if(appContext != nullptr) appContext->Start();
 }
 
 extern "C"
