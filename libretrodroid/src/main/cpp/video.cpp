@@ -149,12 +149,11 @@ namespace libretrodroid {
 
         auto shader = shadersChain[0];
         glUseProgram(shader.gProgram);
-        glVertexAttribPointer(shader.gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0,
-                              gTriangleVertices);
+        glVertexAttribPointer(shader.gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
         glEnableVertexAttribArray(shader.gvPositionHandle);
-        glVertexAttribPointer(shader.gvCoordinateHandle, 2, GL_FLOAT, GL_FALSE, 0,
-                              gTextureCoords);
+        glVertexAttribPointer(shader.gvCoordinateHandle, 2, GL_FLOAT, GL_FALSE, 0, gTextureCoords);
         glEnableVertexAttribArray(shader.gvCoordinateHandle);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, renderer->getTexture());
         glUniform1i(shader.gTextureHandle, 0);
@@ -177,7 +176,7 @@ namespace libretrodroid {
         isDirty = false;
 
         glDisable(GL_DEPTH_TEST);
-        LOGE("glClearColor: %p", &glClearColor);
+        //LOGE("glClearColor: %p", &glClearColor);
         for (int i = 0; i < shadersChain.size(); ++i) {
             auto shader = shadersChain[i];
             auto passData = renderer->getPassData(i);

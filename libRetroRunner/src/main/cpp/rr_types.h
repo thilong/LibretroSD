@@ -17,6 +17,8 @@ struct Variable {
 enum AppCommands {
     kNone = 10,
     kLoadCore,
+    kLoadContent,
+    kInitVideo,
 
 };
 

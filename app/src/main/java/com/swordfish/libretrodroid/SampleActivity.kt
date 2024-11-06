@@ -57,7 +57,7 @@ class SampleActivity : AppCompatActivity() {
         }else {
             coreFile = "libflycast.so"
             //coreFile = "libppsspp.so"
-            gamePath = filesDir.absolutePath + "/roms/bj.cdi"
+            gamePath = filesDir.absolutePath + "/bj.cdi"
             //gamePath = filesDir.absolutePath + "/roms/fl.iso"
         }
         //val gamePath = getExternalFilesDir(null)?.absolutePath + "a.nes"

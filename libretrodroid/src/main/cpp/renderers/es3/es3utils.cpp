@@ -83,7 +83,7 @@ namespace libretrodroid {
             LOGE("Error while creating framebuffer. Leaving!");
             throw std::runtime_error("Cannot create framebuffer");
         }
-
+        LOGE("After ES3Utils::createFramebuffer : %d, %d", result->framebuffer, result->texture);
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);

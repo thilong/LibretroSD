@@ -3358,7 +3358,7 @@ struct retro_midi_interface
 
 /** @} */
 
-/** @defgroup SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE Render Context Negotiation
+/** @defgroup SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE WriteTextureData Context Negotiation
  * @{
  */
 
@@ -5897,7 +5897,7 @@ struct retro_message_ext
     *
     * @li Use this to prioritize errors and warnings
     *     over higher-ranking info and debug messages.
-    * @li Render warnings or errors with extra visual feedback,
+    * @li WriteTextureData warnings or errors with extra visual feedback,
     *     e.g. with brighter colors or accompanying sound effects.
     *
     * @see RETRO_ENVIRONMENT_SET_LOG_INTERFACE
@@ -7399,7 +7399,7 @@ struct retro_device_power
 typedef bool (RETRO_CALLCONV *retro_environment_t)(unsigned cmd, void *data);
 
 /**
- * Render a frame.
+ * WriteTextureData a frame.
  *
  * @note For performance reasons, it is highly recommended to have a frame
  * that is packed in memory, i.e. pitch == width * byte_per_pixel.

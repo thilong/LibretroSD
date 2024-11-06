@@ -11,7 +11,7 @@
 
 namespace libRetroRunner {
     void Environment::UpdateVariable(const std::string &key, const std::string &value, bool notifyCore) {
-        
+
     }
 
     Environment::Environment() {
@@ -66,7 +66,7 @@ namespace libRetroRunner {
                 return cmdSetHardwareRender(data);
             }
             case RETRO_ENVIRONMENT_GET_VARIABLE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_VARIABLE");
+                //LOGDCall("call RETRO_ENVIRONMENT_GET_VARIABLE");
                 return cmdGetVariable(data);
             }
             case RETRO_ENVIRONMENT_SET_VARIABLES: {
@@ -74,7 +74,7 @@ namespace libRetroRunner {
                 return cmdSetVariables(data);
             }
             case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE");
+                //LOGDCall("call RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE");
                 POINTER_VAL(bool) = variablesChanged;
                 variablesChanged = false;
                 return true;
@@ -229,7 +229,7 @@ namespace libRetroRunner {
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_FASTFORWARDING: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_FASTFORWARDING");
+                //LOGDCall("call RETRO_ENVIRONMENT_GET_FASTFORWARDING");
                 POINTER_VAL(bool) = fastForwarding;
                 return true;
             }
@@ -341,65 +341,65 @@ namespace libRetroRunner {
                 //auto request = static_cast<const struct retro_core_options_v2 *>(data);
                 return false;
             }
-            case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL:{
+            case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL: {
                 //TODO:通知前端核心选项，用于替代 RETRO_ENVIRONMENT_SET_VARIABLES， 只在RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION返回 >= 2时使用
                 //RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2 的变体，支持多语言
                 LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL");
                 //auto request = static_cast<const struct retro_core_options_v2 *>(data);
                 return false;
             }
-            case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK:{
+            case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK: {
                 //用于前端向核心通知哪些核心设置应该显示或者应该隐藏
                 LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK");
                 return false;
             }
-            case RETRO_ENVIRONMENT_SET_VARIABLE:{
+            case RETRO_ENVIRONMENT_SET_VARIABLE: {
                 //核心通知前端选项值发生变化。
                 LOGDCall("call RETRO_ENVIRONMENT_SET_VARIABLE");
                 return cmdSetVariable(data);
                 return true;
             }
-            case RETRO_ENVIRONMENT_GET_THROTTLE_STATE:{
+            case RETRO_ENVIRONMENT_GET_THROTTLE_STATE: {
                 //用于核心获取前端的帧率运行情況
                 LOGDCall("call RETRO_ENVIRONMENT_GET_THROTTLE_STATE");
                 return false;
             }
-            case RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT:{
+            case RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT: {
                 //todo:用于核心获取前端想要的存档状态,在这里控制存档的类型，是用于对战还是正常游戏
                 LOGDCall("call RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT");
                 POINTER_VAL(retro_savestate_context) = RETRO_SAVESTATE_CONTEXT_NORMAL;
                 //auto request = static_cast<retro_savestate_context *>(data);
                 return true;
             }
-            case RETRO_ENVIRONMENT_GET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE_SUPPORT:{
+            case RETRO_ENVIRONMENT_GET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE_SUPPORT: {
                 //在SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE之前调用，用于确认所支持的类型
                 LOGDCall("call RETRO_ENVIRONMENT_GET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE_SUPPORT");
                 auto request = static_cast<struct retro_hw_render_context_negotiation_interface *>(data);
                 return false;
             }
-            case RETRO_ENVIRONMENT_GET_JIT_CAPABLE:{
+            case RETRO_ENVIRONMENT_GET_JIT_CAPABLE: {
                 //用于确认当前环境是否支持JIT,主要用于iOS, Javascript
                 LOGDCall("call RETRO_ENVIRONMENT_GET_JIT_CAPABLE");
                 return false;
             }
-            case RETRO_ENVIRONMENT_GET_MICROPHONE_INTERFACE:{
+            case RETRO_ENVIRONMENT_GET_MICROPHONE_INTERFACE: {
                 LOGDCall("call RETRO_ENVIRONMENT_GET_MICROPHONE_INTERFACE");
                 return false;
             }
-            case RETRO_ENVIRONMENT_GET_DEVICE_POWER:{
+            case RETRO_ENVIRONMENT_GET_DEVICE_POWER: {
                 //todo:返回设备的电量，有的核心有可能在低电量下运行效率缓慢。
                 LOGDCall("call RETRO_ENVIRONMENT_GET_DEVICE_POWER");
                 return false;
             }
-            case RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE:{
+            case RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE: {
                 LOGDCall("call RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE");
                 return false;
             }
-            case RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY:{
+            case RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY: {
                 LOGDCall("call RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY -> false");
                 return false;
             }
-            case RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY:{
+            case RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY: {
                 LOGDCall("call RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY -> false");
                 return false;
             }
@@ -438,22 +438,21 @@ namespace libRetroRunner {
 
         renderContextReset = hwRender->context_reset;
         renderContextDestroy = hwRender->context_destroy;
-        hwRender->get_proc_address = &eglGetProcAddress;
+        hwRender->get_proc_address = &Environment::CoreCallbackGetProcAddress;
         hwRender->get_current_framebuffer = &Environment::CoreCallbackGetCurrentFrameBuffer;
         return true;
     }
-
 
     bool Environment::cmdGetVariable(void *data) {
         auto request = static_cast<struct retro_variable *>(data);
         auto foundVariable = variables.find(std::string(request->key));
 
         if (foundVariable == variables.end()) {
-            LOGDCall("Variable: %s -> null", request->key);
+            LOGDCall("call RETRO_ENVIRONMENT_GET_VARIABLE: %s -> null", request->key);
             return false;
         }
         request->value = foundVariable->second.value.c_str();
-        LOGD("Variable: %s -> %s", request->key, request->value);
+        LOGDCall("call RETRO_ENVIRONMENT_GET_VARIABLE: %s -> %s", request->key, request->value);
         return true;
     }
 
@@ -462,7 +461,7 @@ namespace libRetroRunner {
         auto request = static_cast<const struct retro_variable *>(data);
         unsigned idx = 0;
         while (request[idx].key != nullptr) {
-            cmdSetVariable((void*)(&request[idx]));
+            cmdSetVariable((void *) (&request[idx]));
             idx++;
         }
         return true;
@@ -470,7 +469,7 @@ namespace libRetroRunner {
 
     bool Environment::cmdSetVariable(void *data) {
         auto request = static_cast<const struct retro_variable *>(data);
-        if(request && request->key != nullptr){
+        if (request && request->key != nullptr) {
             std::string key(request->key);
             std::string description(request->value);
             std::string value(request->value);
@@ -492,8 +491,6 @@ namespace libRetroRunner {
         }
         return true;
     }
-
-
 
     uintptr_t Environment::CoreCallbackGetCurrentFrameBuffer() {
         //TODO:已经被标记为过时，前端不应该返回预先分配的缓冲区
@@ -532,7 +529,13 @@ namespace libRetroRunner {
         //TODO: 核心通知前端音频状态
     }
 
+    retro_proc_address_t Environment::CoreCallbackGetProcAddress(const char *sym) {
+        LOGDCall("get proc address: %s", sym);
+        return (retro_proc_address_t) eglGetProcAddress(sym);
+    }
+
     bool Environment::cmdSetGeometry(void *data) {
+        LOGDCall("Environment::cmdSetGeometry");
         auto geometry = static_cast<struct retro_game_geometry *>(data);
         gameGeometryHeight = geometry->base_height;
         gameGeometryWidth = geometry->base_width;
@@ -548,7 +551,6 @@ namespace libRetroRunner {
         callback->format = (enum retro_pixel_format) pixelFormat;
         return false;
     }
-
 
 
 }

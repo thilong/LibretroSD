@@ -2,6 +2,9 @@ package com.aidoo.retrorunner;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -22,16 +25,19 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
     }
 
     private void setupView() {
+        NativeRunner.initEnv();
         getHolder().addCallback(this);
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        Log.e("RetroRunnerView", "surfaceCreated");
         NativeRunner.setSurface(holder.getSurface());
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.e("RetroRunnerView", "surfaceChanged " + width + "x" + height);
         NativeRunner.setSurfaceSize(width, height);
     }
 
@@ -40,11 +46,12 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
         NativeRunner.setSurface(null);
     }
 
-
     public void startEmu(RunConfig config) {
         NativeRunner.create(config.getRomPath(), config.getCorePath(), config.getSystemPath(), config.getSavePath());
         if (config.haveVariables()) {
-            NativeRunner.setVariables(, config.getVariables(), );
+            for (String key : config.getVariables().keySet()) {
+                NativeRunner.setVariable(key, config.getVariables().get(key));
+            }
         }
         NativeRunner.start();
     }
@@ -65,4 +72,10 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
         NativeRunner.reset();
     }
 
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        NativeRunner.updateButtonState(0, event.getKeyCode(), event.getAction() == KeyEvent.ACTION_DOWN);
+        return true;
+    }
 }

@@ -22,15 +22,24 @@ set(LIBRETRO_COMMON
 
 add_library(RetroRunner SHARED
         retro_runner.cpp
+
         core.cpp
         environment.cpp
-        app_context.cpp
+        app.cpp
+        input.cpp
+        video.cpp
+
+        video/video_gl.cpp
+        video/hw_frame_buffer_gl.cpp
+        video/software_texture_buffer.cpp
+        video/shader_pass_gl.cpp
+
+        input/software_input.cpp
 
         utils/threadsafe_queue.hpp
+        utils/jnistring.cpp
+        utils/utils.cpp
 
-
-        esTest.cpp
-        GLRender.cpp
         ${LIBRETRO_COMMON}
 )
 

@@ -27,16 +27,20 @@ public class NativeRunner {
     public static native void create(String romPath, String corePath, String systemPath, String savePath);
 
     /*设置模拟的初始变量*/
-    public static native void setVariables(String key, String value);
+    public static native void setVariable(String key, String value);
 
     /*开始模拟*/
     public static native void start();
+
     /*暂停*/
     public static native void pause();
+
     /*恢复*/
     public static native void resume();
+
     /*重置*/
     public static native void reset();
+
     /*停止，停止后不可恢复*/
     public static native void stop();
 
@@ -45,4 +49,10 @@ public class NativeRunner {
 
     /*更新显示输出的尺寸*/
     public static native void setSurfaceSize(int width, int height);
+
+
+    /*玩家按钮输入*/
+    public static native void updateButtonState(int player, int key, boolean down);
+    /*玩家摇杆输入*/
+    public static native void UpdateAxisState(int player, int axis, float value);
 }
