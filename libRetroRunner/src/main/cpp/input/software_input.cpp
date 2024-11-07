@@ -60,7 +60,7 @@ namespace libRetroRunner {
     }
 
     void SoftwareInput::Init() {
-        memset(button_map, 0, sizeof(button_map));
+        memset(button_map, -1, sizeof(button_map));
         memset(buttons, 0, sizeof(buttons));
         memset(axis, 0, sizeof(axis));
         memset(have_button_map, 0, sizeof(have_button_map));
@@ -136,10 +136,10 @@ namespace libRetroRunner {
             mappedButton = button_map[port][button];
 
         }
-        LOGW("button map:%d", mappedButton);
-        if (mappedButton > 0) {
+        if (mappedButton >= 0) {
             buttons[port][mappedButton] = pressed ? 1 : 0;
         }
+        buttons[port][button] = pressed ? 1 : 0;
     }
 
     void SoftwareInput::Poll() {

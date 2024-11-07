@@ -7,6 +7,11 @@
 #include "video.h"
 #include "rr_types.h"
 
+#define JNILOGD(...) LOGD("[JNI] " __VA_ARGS__)
+#define JNILOGW(...) LOGW("[JNI] " __VA_ARGS__)
+#define JNILOGE(...) LOGE("[JNI] " __VA_ARGS__)
+#define JNILOGI(...) LOGI("[JNI] " __VA_ARGS__)
+
 namespace libRetroRunner {
     extern "C" JavaVM *gVm = nullptr;
 
@@ -29,21 +34,19 @@ Java_com_aidoo_retrorunner_NativeRunner_create(JNIEnv *env, jclass clazz, jstrin
     JString system(env, system_path);
     JString save(env, save_path);
     app->SetFiles(rom.stdString(), core.stdString(), system.stdString(), save.stdString());
-    LOGD("[JNI] create app context");
+    JNILOGD("new app context created.");
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_aidoo_retrorunner_NativeRunner_setSurface(JNIEnv *env, jclass clazz, jobject surface) {
+    auto appContext = libRetroRunner::AppContext::Instance();
+    if (appContext == nullptr) return;
     if (surface == nullptr) {
-
+        appContext->SetVideoRenderTarget(nullptr, 0);
     } else {
-        auto appContext = libRetroRunner::AppContext::Instance();
-        if (appContext == nullptr) return;
-        libRetroRunner::VideoContext *video = appContext->GetVideo();
-        if (video == nullptr) return;
-        video->SetSurface(env, surface);
-        appContext->AddCommand(AppCommands::kInitVideo);
+        void *args[2] = {env, surface};
+        appContext->SetVideoRenderTarget(args, 2);
     }
 }
 
@@ -52,9 +55,7 @@ JNIEXPORT void JNICALL
 Java_com_aidoo_retrorunner_NativeRunner_setSurfaceSize(JNIEnv *env, jclass clazz, jint width, jint height) {
     auto appContext = libRetroRunner::AppContext::Instance();
     if (appContext == nullptr) return;
-    libRetroRunner::VideoContext *video = appContext->GetVideo();
-    if (video == nullptr) return;
-    video->SetSurfaceSize(width, height);
+    appContext->SetVideoRenderSize(width, height);
 }
 
 extern "C"
@@ -62,11 +63,9 @@ JNIEXPORT void JNICALL
 Java_com_aidoo_retrorunner_NativeRunner_setVariable(JNIEnv *env, jclass clazz, jstring key, jstring value) {
     auto appContext = libRetroRunner::AppContext::Instance();
     if (appContext == nullptr) return;
-    libRetroRunner::Environment *environment = appContext->GetEnvironment();
-    if (environment == nullptr) return;
     JString keyVal(env, key);
     JString valueVal(env, key);
-    environment->UpdateVariable(keyVal.stdString(), valueVal.stdString());
+    appContext->SetVariable(keyVal.stdString(), valueVal.stdString());
 }
 
 extern "C"

@@ -25,13 +25,13 @@ namespace libRetroRunner {
 
         virtual void Destroy() = 0;
 
-        virtual void Prepare() = 0;
-
         virtual void DrawFrame() = 0;
 
         virtual void OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) = 0;
 
-        virtual void SetSurface(JNIEnv *env, jobject surface) = 0;
+        virtual void OnGameGeometryChanged() = 0;
+
+        virtual void SetSurface(void *envObj, void *surfaceObj) = 0;
 
         virtual void SetSurfaceSize(unsigned width, unsigned height) = 0;
 

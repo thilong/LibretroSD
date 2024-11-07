@@ -1,6 +1,7 @@
 package com.swordfish.libretrodroid;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 
@@ -16,9 +17,7 @@ public class RetroRunnerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        retroRunnerView = new RetroRunnerView(this);
-        retroRunnerView.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
-        setContentView(retroRunnerView);
+
         String platform = "dc";
         String testRom = "";
         String testCore = "";
@@ -36,11 +35,14 @@ public class RetroRunnerActivity extends AppCompatActivity {
         runConfig.setCorePath(testCore);
         runConfig.setSystemPath(getFilesDir().getAbsolutePath());
         runConfig.setSavePath(getExternalFilesDir(null).getAbsolutePath());
-        retroRunnerView.startEmu(runConfig);
+        retroRunnerView = new RetroRunnerView(this, runConfig);
+        retroRunnerView.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
+        setContentView(retroRunnerView);
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+
         return retroRunnerView.dispatchKeyEvent(event);
     }
 }

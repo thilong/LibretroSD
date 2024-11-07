@@ -6,6 +6,9 @@
 #include "rr_log.h"
 #include <EGL/egl.h>
 
+#include "app.h"
+#include "video.h"
+
 #define POINTER_VAL(_TYPE_) (*((_TYPE_*)data))
 #define LOGDCall(...) LOGD("[Environment] "  __VA_ARGS__)
 
@@ -25,44 +28,44 @@ namespace libRetroRunner {
     bool Environment::HandleCoreCallback(unsigned int cmd, void *data) {
         switch (cmd) {
             case RETRO_ENVIRONMENT_SET_ROTATION: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_ROTATION");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_ROTATION -> [NO IMPL]");
                 break;
             }
             case RETRO_ENVIRONMENT_GET_CAN_DUPE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_CAN_DUPE");
-                POINTER_VAL(bool) = false;
+                LOGDCall("call RETRO_ENVIRONMENT_GET_CAN_DUPE -> false");
+                POINTER_VAL(bool) = true;
                 return true;
             }
             case RETRO_ENVIRONMENT_SET_MESSAGE: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_MESSAGE");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_MESSAGE -> 1");
                 auto *msg = static_cast<struct retro_message *>(data);
                 LOGD("Message: %s", msg->msg);
                 return true;
             }
             case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY");
                 POINTER_VAL(const char*) = systemPath.c_str();
+                LOGDCall("call RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY -> %s", systemPath.c_str());
                 return !systemPath.empty();
             }
             case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_PIXEL_FORMAT");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_PIXEL_FORMAT -> 1");
                 return cmdSetPixelFormat(data);
             }
             case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE -> disk control");
                 diskControllerCallback = static_cast<retro_disk_control_callback *>(data);
                 return true;
             }
             case RETRO_ENVIRONMENT_SET_HW_RENDER: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_HW_RENDER");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_HW_RENDER -> set hardware render");
                 return cmdSetHardwareRender(data);
             }
             case RETRO_ENVIRONMENT_GET_VARIABLE: {
@@ -80,16 +83,16 @@ namespace libRetroRunner {
                 return true;
             }
             case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME -> record");
                 coreSupportNoGame = POINTER_VAL(bool);
                 return true;
             }
             case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK  -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK -> [NO IMPL]");
                 //auto callback = static_cast<const struct retro_audio_callback *>(data);
                 return false;
             }
@@ -105,11 +108,11 @@ namespace libRetroRunner {
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_LOG_INTERFACE: {
@@ -119,22 +122,23 @@ namespace libRetroRunner {
                 return true;
             }
             case RETRO_ENVIRONMENT_GET_PERF_INTERFACE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_PERF_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_PERF_INTERFACE -> [NO IMPL]");
                 //TODO:在这里添加性能计数器
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY , RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY , RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY -> [NO IMPL]");
                 //TODO:在这里返回内容目录
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY");
+
                 POINTER_VAL(const char*) = savePath.c_str();
+                LOGDCall("call RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY -> %s", savePath.c_str());
                 return !savePath.empty();
             }
             case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO: {
@@ -142,21 +146,21 @@ namespace libRetroRunner {
                 return cmdSetGeometry(data);
             }
             case RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO: {
                 //TODO:通知前端支持的控制器信息，以方便用户选择不同的控制器,然后使用retro_set_controller_port_device进行设置
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CONTROLLER_INFO");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_CONTROLLER_INFO -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_MEMORY_MAPS: {
                 //TODO:通知前端核心所使用的内存空间
-                LOGDCall("call RETRO_ENVIRONMENT_SET_MEMORY_MAPS");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_MEMORY_MAPS -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_GEOMETRY: {
@@ -164,11 +168,11 @@ namespace libRetroRunner {
                 return cmdSetGeometry(data);
             }
             case RETRO_ENVIRONMENT_GET_USERNAME: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_USERNAME");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_USERNAME -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_LANGUAGE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_LANGUAGE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_LANGUAGE -> en");
                 POINTER_VAL(unsigned) = language;
                 return true;
             }
@@ -178,38 +182,38 @@ namespace libRetroRunner {
             }
             case RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE: {
                 //返回前端硬件渲染的类型，不是所有核心都需要这个回调
-                LOGDCall("call RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE -> [NO IMPL]");
                 //auto callback = static_cast<const struct retro_hw_render_interface **>(data);
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS: {
                 //通知前端核心是否支持成就
-                LOGDCall("call RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS -> [NO IMPL]");
                 return true;
             }
             case RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE: {
                 //通知前端核心是否支持硬件渲染上下文协商
-                LOGDCall("call RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS: {
                 //通知前端核心是否支持序列化特性
-                LOGDCall("call RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT: {
                 //通知前端:核心是否支持共享硬件渲染上下文
-                LOGDCall("call RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_VFS_INTERFACE: {
                 //TODO:获取虚拟文件系统
-                LOGDCall("call RETRO_ENVIRONMENT_GET_VFS_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_VFS_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_LED_INTERFACE: {
                 //TODO:获取LED系统
-                LOGDCall("call RETRO_ENVIRONMENT_GET_LED_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_LED_INTERFACE -> [NO IMPL]");
                 return false;
 
             }
@@ -225,7 +229,7 @@ namespace libRetroRunner {
             }
             case RETRO_ENVIRONMENT_GET_MIDI_INTERFACE: {
                 //TODO:获取MIDI系统
-                LOGDCall("call RETRO_ENVIRONMENT_GET_MIDI_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_MIDI_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_FASTFORWARDING: {
@@ -255,20 +259,20 @@ namespace libRetroRunner {
                     这个回调是为了用于取代 RETRO_ENVIRONMENT_SET_VARIABLES (RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION 返回 >= 1时)，
                     如果核心使用了新的版本返回选项，则需要实现这个回调, 其结构体为retro_core_option_definition，类似于json的实现
                  */
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS -> [NO IMPL]");
                 //auto request = static_cast<const struct retro_core_option_definition *>(data);
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL: {
                 /*TODO:RETRO_ENVIRONMENT_SET_CORE_OPTIONS的变体，用于支持多语言*/
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL -> [NO IMPL]");
                 //auto request = static_cast<const struct retro_core_options_intl *>(data);
                 return false;
 
             }
             case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY: {
                 //用于控制核心选项的可见性
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY");
+                //LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY -> [NO IMPL]");
                 //auto request = static_cast<const struct retro_core_option_display *>(data);
                 return true;
             }
@@ -286,7 +290,7 @@ namespace libRetroRunner {
             }
             case RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE: {
                 //通知前端核心所支持的磁盘控制扩展接口
-                LOGDCall("call RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE -> [NO IMPL]");
                 //auto request = static_cast<const struct retro_disk_control_ext_interface *>(data);
                 return false;
             }
@@ -306,7 +310,7 @@ namespace libRetroRunner {
             case RETRO_ENVIRONMENT_GET_INPUT_MAX_USERS: {
                 //返回前端所支持的最大用户数
                 LOGDCall("call RETRO_ENVIRONMENT_GET_INPUT_MAX_USERS");
-                POINTER_VAL(unsigned) = maxUserCount;
+                POINTER_VAL(unsigned) = MAX_PLAYER;
                 return true;
             }
             case RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK: {
@@ -318,39 +322,39 @@ namespace libRetroRunner {
             }
             case RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY: {
                 //通知前端核心所需要的最小音频延迟
-                LOGDCall("call RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE: {
                 //通知前端核心是否应该快进, 比如有时核心需要跳过一些帧时
-                LOGDCall("call RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE -> [NO IMPL]");
                 //auto request = static_cast<const struct retro_fastforwarding_override *>(data);
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_GAME_INFO_EXT: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_GAME_INFO_EXT");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_GAME_INFO_EXT -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2: {
                 //TODO:通知前端核心选项，用于替代 RETRO_ENVIRONMENT_SET_VARIABLES， 只在RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION返回 >= 2时使用
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2 -> [NO IMPL]");
                 //auto request = static_cast<const struct retro_core_options_v2 *>(data);
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL: {
                 //TODO:通知前端核心选项，用于替代 RETRO_ENVIRONMENT_SET_VARIABLES， 只在RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION返回 >= 2时使用
                 //RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2 的变体，支持多语言
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL -> [NO IMPL]");
                 //auto request = static_cast<const struct retro_core_options_v2 *>(data);
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK: {
                 //用于前端向核心通知哪些核心设置应该显示或者应该隐藏
-                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_VARIABLE: {
@@ -361,7 +365,7 @@ namespace libRetroRunner {
             }
             case RETRO_ENVIRONMENT_GET_THROTTLE_STATE: {
                 //用于核心获取前端的帧率运行情況
-                LOGDCall("call RETRO_ENVIRONMENT_GET_THROTTLE_STATE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_THROTTLE_STATE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT: {
@@ -379,32 +383,32 @@ namespace libRetroRunner {
             }
             case RETRO_ENVIRONMENT_GET_JIT_CAPABLE: {
                 //用于确认当前环境是否支持JIT,主要用于iOS, Javascript
-                LOGDCall("call RETRO_ENVIRONMENT_GET_JIT_CAPABLE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_JIT_CAPABLE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_MICROPHONE_INTERFACE: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_MICROPHONE_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_MICROPHONE_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_DEVICE_POWER: {
                 //todo:返回设备的电量，有的核心有可能在低电量下运行效率缓慢。
-                LOGDCall("call RETRO_ENVIRONMENT_GET_DEVICE_POWER");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_DEVICE_POWER -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE: {
-                LOGDCall("call RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE");
+                LOGDCall("call RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY -> false");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY -> [NO IMPL]");
                 return false;
             }
             case RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY: {
-                LOGDCall("call RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY -> false");
+                LOGDCall("call RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY -> [NO IMPL]");
                 return false;
             }
             default:
-                LOGDCall("not handled: %d -> false", cmd);
+                LOGDCall("not handled: %d -> false  -> [NO IMPL]", cmd);
                 break;
         }
         return false;
@@ -493,8 +497,17 @@ namespace libRetroRunner {
     }
 
     uintptr_t Environment::CoreCallbackGetCurrentFrameBuffer() {
-        //TODO:已经被标记为过时，前端不应该返回预先分配的缓冲区
-        return 0;
+        //TODO:已经被标记为过时，前端不应该返回预先分配的缓冲区、
+        uintptr_t ret = 0;
+        auto appContext = AppContext::Instance();
+        if (appContext) {
+            auto video = appContext->GetVideo();
+            if (video) {
+                ret = (uintptr_t) video->GetCurrentFramebuffer();
+            }
+        }
+        LOGDCall("call CoreCallbackGetCurrentFrameBuffer -> %u", ret);
+        return ret;
     }
 
     bool Environment::CoreCallbackSetRumbleState(unsigned int port, enum retro_rumble_effect effect, uint16_t strength) {
@@ -530,7 +543,7 @@ namespace libRetroRunner {
     }
 
     retro_proc_address_t Environment::CoreCallbackGetProcAddress(const char *sym) {
-        LOGDCall("get proc address: %s", sym);
+        //LOGDCall("get proc address: %s", sym);
         return (retro_proc_address_t) eglGetProcAddress(sym);
     }
 
@@ -540,7 +553,15 @@ namespace libRetroRunner {
         gameGeometryHeight = geometry->base_height;
         gameGeometryWidth = geometry->base_width;
         gameGeometryAspectRatio = geometry->aspect_ratio;
-        gameGeometryUpdated = true;
+
+        //游戏的视频几何尺寸已经更新，需要创建新的渲染Buffer
+        auto appContext = AppContext::Instance();
+        if (appContext) {
+            auto video = appContext->GetVideo();
+            if (video) {
+                video->OnGameGeometryChanged();
+            }
+        }
         return true;
     }
 

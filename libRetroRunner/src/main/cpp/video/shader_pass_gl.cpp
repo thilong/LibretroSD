@@ -176,6 +176,7 @@ namespace libRetroRunner {
         if (viewHeight == 0) viewHeight = frameBuffer->GetHeight();
         glViewport(0, 0, viewWidth, viewHeight);
 
+
         //set position
         glEnableVertexAttribArray(attr_position);
         glVertexAttribPointer(attr_position, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);

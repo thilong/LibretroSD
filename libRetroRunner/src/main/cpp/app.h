@@ -17,11 +17,13 @@
 namespace libRetroRunner {
 
     enum AppState {
-        UNKNOWN = 0,
-        INIT = 1 << 1,
-        RUNNING = 1 << 2,
-        PAUSE = 1 << 3,
-        STOP = 1 << 4
+        kNone = 0,
+        kPathSet = 1 << 0,
+        kCoreReady = 1 << 1,
+        kContentReady = 1 << 2,
+        kVideoReady = 1 << 3,
+        kRunning = 1 << 4,
+        kPaused = 1 << 5,
     };
 
     class AppContext {
@@ -35,7 +37,11 @@ namespace libRetroRunner {
         void SetFiles(const std::string &romPath, const std::string &corePath, const std::string &systemPath,
                       const std::string &savePath);
 
-        void SetVariable(const std::string &key, const std::string &value);
+        void SetVariable(const std::string &key, const std::string &value, bool notifyCore = false);
+
+        void SetVideoRenderTarget(void **args, int argc);
+
+        void SetVideoRenderSize(unsigned width, unsigned height);
 
         void AddCommand(int command);
 
@@ -48,8 +54,6 @@ namespace libRetroRunner {
         void Reset();
 
         void Stop();
-
-        int GetState();
 
         void ThreadLoop();
 
@@ -64,7 +68,9 @@ namespace libRetroRunner {
 
         VideoContext *GetVideo();
 
-        Input* GetInput();
+        Input *GetInput();
+
+        int GetState();
 
     private: //以下函数只在模拟线程中调用
         void processCommand();
@@ -74,7 +80,7 @@ namespace libRetroRunner {
         void cmdLoadContent();
 
         void cmdInitVideo();
-
+        void cmdUnloadVideo();
 
     private:
 

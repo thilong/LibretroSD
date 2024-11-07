@@ -17,4 +17,5 @@ namespace libRetroRunner {
     std::unique_ptr<Input> Input::NewInstance() {
         return std::make_unique<SoftwareInput>();
     }
+
 }

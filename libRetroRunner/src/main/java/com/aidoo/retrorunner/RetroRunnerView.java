@@ -1,43 +1,37 @@
 package com.aidoo.retrorunner;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+@SuppressLint("ViewConstructor")
 public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callback {
-    public RetroRunnerView(Context context) {
+
+    private final RunConfig config;
+
+    public RetroRunnerView(Context context, RunConfig config) {
         super(context);
-        setupView();
-    }
-
-    public RetroRunnerView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        setupView();
-    }
-
-    public RetroRunnerView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+        this.config = config;
         setupView();
     }
 
     private void setupView() {
         NativeRunner.initEnv();
+        startEmu(config);
         getHolder().addCallback(this);
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.e("RetroRunnerView", "surfaceCreated");
         NativeRunner.setSurface(holder.getSurface());
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.e("RetroRunnerView", "surfaceChanged " + width + "x" + height);
+        Log.e("RetroRunner", "surfaceChanged " + width + "x" + height);
         NativeRunner.setSurfaceSize(width, height);
     }
 
@@ -46,7 +40,8 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
         NativeRunner.setSurface(null);
     }
 
-    public void startEmu(RunConfig config) {
+
+    private void startEmu(RunConfig config) {
         NativeRunner.create(config.getRomPath(), config.getCorePath(), config.getSystemPath(), config.getSavePath());
         if (config.haveVariables()) {
             for (String key : config.getVariables().keySet()) {
@@ -71,7 +66,6 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
     public void resetEmu() {
         NativeRunner.reset();
     }
-
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {

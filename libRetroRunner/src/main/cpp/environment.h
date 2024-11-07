@@ -87,7 +87,6 @@ namespace libRetroRunner {
         unsigned int gameGeometryHeight;
         unsigned int gameGeometryWidth;
         float gameGeometryAspectRatio;
-        bool gameGeometryUpdated;
 
         retro_disk_control_callback *diskControllerCallback;
     };

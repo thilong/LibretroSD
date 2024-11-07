@@ -89,7 +89,7 @@ namespace libRetroRunner {
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        FBOLOGD("new frame buffer created: %d", frame_buffer);
+        FBOLOGD("new frame buffer created: %d, %d x %d", frame_buffer, width, height);
     }
 
     void GLHardwareFrameBuffer::Destroy() {

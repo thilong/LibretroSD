@@ -28,11 +28,11 @@ namespace libRetroRunner {
 
         void Destroy() override;
 
-        void Prepare() override;
-
-        void SetSurface(JNIEnv *env, jobject surface) override;
+        void SetSurface(void *envObj, void *surfaceObj) override;
 
         void SetSurfaceSize(unsigned int width, unsigned int height) override;
+
+        void OnGameGeometryChanged() override;
 
         void OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) override;
 
@@ -42,7 +42,6 @@ namespace libRetroRunner {
 
     private:
         bool eglContextMakeCurrent();
-        void createFrameBufferForCore(int useCase = 0);
 
     private:
         int current_width;

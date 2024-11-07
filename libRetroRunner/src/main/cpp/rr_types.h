@@ -5,6 +5,9 @@
 #ifndef _RR_TYPES_H
 #define _RR_TYPES_H
 
+#define BIT_SET(_VAR_, _VALUE_) ((_VAR_) |= (_VALUE_))
+#define BIT_CLEAR(_VAR_, _VALUE_) ((_VAR_) &= (~(_VALUE_)))
+#define BIT_TEST(_VAR_, _VALUE_) (((_VAR_) & (_VALUE_)) != 0)
 
 #include <string>
 
@@ -19,6 +22,7 @@ enum AppCommands {
     kLoadCore,
     kLoadContent,
     kInitVideo,
+    kUnloadVideo,
 
 };
 

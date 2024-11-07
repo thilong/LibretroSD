@@ -10,7 +10,7 @@
 namespace libRetroRunner {
 
 #ifdef DEBUG
-/*是否输出核心的日志中debug级别的信息*/
+    /*是否输出核心的日志中debug级别的信息*/
 #define CORE_DEUBG_LOG 1
 #endif
 #define LOG_TAG "RetroRunner"
@@ -19,6 +19,29 @@ namespace libRetroRunner {
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+#define LOGI_IF(_COND_, ...) \
+    do{                      \
+        if (_COND_){         \
+          LOGI(__VA_ARGS__)                   \
+        }       \
+    }while(false)
+
+#define LOGD_IF(_COND_, ...) \
+    do{                      \
+        if (_COND_){         \
+          LOGD("at %s:%d", __FILE_NAME__, __LINE__);                   \
+          LOGD(__VA_ARGS__);                   \
+        }       \
+    }while(false)
+
+#define LOGE_IF(_COND_, ...) \
+    do{                      \
+        if (_COND_){         \
+          LOGE("at %s:%d", __FILE_NAME__, __LINE__);                   \
+          LOGE(__VA_ARGS__);                   \
+        }       \
+    }while(false)
 
 #define GL_CHECK(_FMT_) \
      do { \

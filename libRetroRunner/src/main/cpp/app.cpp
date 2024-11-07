@@ -29,34 +29,65 @@ namespace libRetroRunner {
         return instance.get();
     }
 
-    Environment *AppContext::GetEnvironment() const {
-        return environment.get();
-    }
-
     AppContext::AppContext() {
-        state = AppState::INIT;
+
     }
 
     AppContext::~AppContext() {
         if (instance != nullptr && instance.get() == this) {
             instance = nullptr;
         }
-        state = AppState::STOP;
+        BIT_CLEAR(state, AppState::kRunning);
+
+        input = nullptr;
+        core = nullptr;
+        video = nullptr;
+        environment = nullptr;
     }
 
-    int AppContext::GetState() {
-        return state;
+    void AppContext::SetFiles(const std::string &romPath, const std::string &corePath, const std::string &systemPath, const std::string &savePath) {
+        this->rom_path = romPath;
+        this->core_path = corePath;
+        this->system_path = systemPath;
+        this->save_path = savePath;
+        this->environment = std::make_unique<Environment>();
+        environment->SetSavePath(save_path);
+        environment->SetSystemPath(system_path);
+
+        BIT_SET(state, AppState::kPathSet);
+    }
+
+    void AppContext::SetVariable(const std::string &key, const std::string &value, bool notifyCore) {
+        environment->UpdateVariable(key, value, notifyCore);
+    }
+
+    void AppContext::SetVideoRenderTarget(void **args, int argc) {
+        if (args == nullptr) {
+            //clear video
+            this->AddCommand(AppCommands::kUnloadVideo);
+        } else {
+            //create video
+            this->video = VideoContext::NewInstance();
+            this->video->SetSurface(args[0], args[1]);
+            this->AddCommand(AppCommands::kInitVideo);
+        }
+    }
+
+    void AppContext::SetVideoRenderSize(unsigned int width, unsigned int height) {
+        if (video != nullptr) {
+            video->SetSurfaceSize(width, height);
+        }
     }
 
     void AppContext::Start() {
-        if (!(state & AppState::INIT)) {
-            LOGE("AppContext is not initialized");
+        if (!BIT_TEST(state, AppState::kPathSet)) {
+            APPLOGE("Paths are empty , can't start");
             return;
         }
-        pthread_t thread;
-        pthread_create(&thread, nullptr, libRetroRunner::appThread, this);
         AddCommand(AppCommands::kLoadCore);
         AddCommand(AppCommands::kLoadContent);
+        pthread_t thread;
+        pthread_create(&thread, nullptr, libRetroRunner::appThread, this);
     }
 
     void AppContext::Pause() {
@@ -68,48 +99,44 @@ namespace libRetroRunner {
     }
 
     void AppContext::Reset() {
-
+        if (BIT_TEST(state, kContentReady)) {
+            core->retro_reset();
+        }
     }
 
     void AppContext::Stop() {
-        state = AppState::STOP;
+        BIT_CLEAR(state, AppState::kRunning);
     }
 
     void AppContext::ThreadLoop() {
-        state = AppState::RUNNING;
+        BIT_SET(state, AppState::kRunning);
         JNIEnv *env;
         try {
-            while (state != AppState::STOP) {
-                if (state == AppState::PAUSE) {
+            while (BIT_TEST(state, AppState::kRunning)) {
+                if (BIT_TEST(state, AppState::kPaused)) {
                     //sleep for 16ms, for 60fps
                     usleep(16000);
                     continue;
                 }
-
-
                 processCommand();
-
-                gVm->AttachCurrentThread(&env, nullptr);
-
-                if (video != nullptr)
-                    video->Prepare();
-
-                if (core != nullptr) {
+                //只有视频和内容都准备好了才能运行
+                if (BIT_TEST(state, AppState::kVideoReady) && BIT_TEST(state, AppState::kContentReady)) {
+                    APPLOGD("emu retro_run");
+                    gVm->AttachCurrentThread(&env, nullptr);
                     core->retro_run();
                     gVm->DetachCurrentThread();
                 } else {
-                    gVm->DetachCurrentThread();
                     usleep(16000);
                 }
-
             }
         } catch (std::exception &exception) {
             APPLOGE("emu end with error: %s", exception.what());
         }
+        BIT_CLEAR(state, AppState::kRunning);
         APPLOGE("emu stopped");
-        state = AppState::STOP;
     }
 
+    /*-----App Commands--------------------------------------------------------------*/
     //这个函数只在模拟线程(绘图线程)中调用
     void AppContext::processCommand() {
         int command;
@@ -124,6 +151,9 @@ namespace libRetroRunner {
                 case AppCommands::kInitVideo:
                     cmdInitVideo();
                     break;
+                case AppCommands::kUnloadVideo:
+                    cmdUnloadVideo();
+                    break;
                 case AppCommands::kNone:
                 default:
                     break;
@@ -131,26 +161,12 @@ namespace libRetroRunner {
         }
     }
 
-    void AppContext::SetFiles(const std::string &romPath, const std::string &corePath, const std::string &systemPath, const std::string &savePath) {
-        this->rom_path = romPath;
-        this->core_path = corePath;
-        this->system_path = systemPath;
-        this->save_path = savePath;
-        this->environment = std::make_unique<Environment>();
-        environment->SetSavePath(save_path);
-        environment->SetSystemPath(system_path);
-    }
-
-    void AppContext::SetVariable(const std::string &key, const std::string &value) {
-        environment->UpdateVariable(key, value);
-    }
-
     void AppContext::AddCommand(int command) {
         commands.push(command);
     }
 
     void AppContext::cmdLoadCore() {
-        APPLOGD("command: load core");
+        APPLOGD("cmd: load core -> %s", core_path.c_str());
         try {
             core = std::make_unique<Core>(this->core_path);
 
@@ -163,13 +179,13 @@ namespace libRetroRunner {
 
             core->retro_init();
 
+            //获取核心默认的尺寸
             struct retro_system_av_info avInfo;
             core->retro_get_system_av_info(&avInfo);
             environment->gameGeometryWidth = avInfo.geometry.base_width;
             environment->gameGeometryHeight = avInfo.geometry.base_height;
             environment->gameGeometryAspectRatio = avInfo.geometry.aspect_ratio;
-            environment->gameGeometryUpdated = true;
-
+            BIT_SET(state, AppState::kCoreReady);
         } catch (std::exception &exception) {
             core = nullptr;
             APPLOGE("load core failed");
@@ -178,8 +194,12 @@ namespace libRetroRunner {
 
     void AppContext::cmdLoadContent() {
         APPLOGD("command: load content: %s", rom_path.c_str());
-        if (core == nullptr) {
-            APPLOGE("try to load content, but core is not loaded yet!!!");
+        if (BIT_TEST(state, AppState::kContentReady)) {
+            APPLOGE("content already loaded");
+            return;
+        }
+        if (!BIT_TEST(state, AppState::kCoreReady)) {
+            APPLOGE("try to load content, but core is not ready yet!!!");
             return;
         }
 
@@ -190,6 +210,7 @@ namespace libRetroRunner {
         game_info.path = rom_path.c_str();
         game_info.meta = nullptr;
 
+        //TODO:这里需要加入zip解压支持
         if (system_info.need_fullpath) {
             game_info.data = nullptr;
             game_info.size = 0;
@@ -200,6 +221,10 @@ namespace libRetroRunner {
         }
 
         bool result = core->retro_load_game(&game_info);
+        if (!result) {
+            APPLOGE("Cannot load game. Leaving.");
+            throw std::runtime_error("Cannot load game");
+        }
 
         if (input == nullptr) {
             input = Input::NewInstance();
@@ -208,22 +233,33 @@ namespace libRetroRunner {
         for (int player = 0; player < MAX_PLAYER; player++) {
             core->retro_set_controller_port_device(player, RETRO_DEVICE_JOYPAD);
         }
-
-        if (!result) {
-            LOGE("Cannot load game. Leaving.");
-            throw std::runtime_error("Cannot load game");
-        }
+        BIT_SET(state, AppState::kContentReady);
     }
 
     void AppContext::cmdInitVideo() {
-        APPLOGD("command: init video");
+        APPLOGD("cmd: init video");
         JNIEnv *env;
         gVm->AttachCurrentThread(&env, nullptr);
         video->Init();
+        gVm->DetachCurrentThread();
+        BIT_SET(state, AppState::kVideoReady);
+
+    }
+
+    void AppContext::cmdUnloadVideo() {
+        APPLOGD("cmd: unload video");
+        JNIEnv *env;
+        gVm->AttachCurrentThread(&env, nullptr);
+        video = nullptr;
         if (environment->renderUseHWAcceleration) {
-            environment->renderContextReset();
+            environment->renderContextDestroy();
         }
         gVm->DetachCurrentThread();
+    }
+
+    /*-----Properties--------------------------------------------------------------*/
+    int AppContext::GetState() {
+        return state;
     }
 
     VideoContext *AppContext::GetVideo() {
@@ -235,6 +271,10 @@ namespace libRetroRunner {
 
     Input *AppContext::GetInput() {
         return input.get();
+    }
+
+    Environment *AppContext::GetEnvironment() const {
+        return environment.get();
     }
 
     /*-----RETRO CALLBACKS--------------------------------------------------------------*/
@@ -279,8 +319,6 @@ namespace libRetroRunner {
             if (input != nullptr)
                 ret = input->State(port, device, index, id);
         }
-        if (ret > 0)
-            LOGW("input state: %d", ret);
         return ret;
     }
 }
