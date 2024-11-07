@@ -21,7 +21,7 @@
 #define GLVIDEOLOGW(...) LOGW("[VIDEO] " __VA_ARGS__)
 #define GLVIDEOLOGE(...) LOGE("[VIDEO] " __VA_ARGS__)
 #define GLVIDEOLOGI(...) LOGI("[VIDEO] " __VA_ARGS__)
-#define ENABLE_GL_DEBUG 0
+#define ENABLE_GL_DEBUG 1
 namespace libRetroRunner {
 
     extern "C" JavaVM *gVm;
@@ -48,8 +48,11 @@ namespace libRetroRunner {
         auto debugCallback = (void (*)(void *, void *)) eglGetProcAddress("glDebugMessageCallback");
         if (debugCallback) {
             glEnable(GL_DEBUG_OUTPUT);
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
             debugCallback((void *) MessageCallback, nullptr);
             LOGW("GL debug callback enabled.");
+        }else{
+            LOGW("cant find symbol of glDebugMessageCallback, log wont show up.");
         }
         return true;
     }
@@ -123,9 +126,7 @@ namespace libRetroRunner {
             return;
         }
 
-#if(ENABLE_GL_DEBUG)
-        initializeGLESLogCallbackIfNeeded();
-#endif
+
 
     }
 
@@ -179,8 +180,9 @@ namespace libRetroRunner {
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             */
             GLVIDEOLOGD("draw frame: %d x %d", current_width, current_height);
+            GL_CHECK("before draw frame")
             gamePass->DrawTexture(0, current_width, current_height);
-
+            GL_CHECK("end draw frame")
             eglSwapBuffers(eglDisplay, eglSurface);
         } while ((false));
 
@@ -218,7 +220,7 @@ namespace libRetroRunner {
     }
 
     unsigned int GLVideoContext::GetCurrentFramebuffer() {
-        GLVIDEOLOGW("GLVideoContext::GetCurrentFramebuffer");
+        //GLVIDEOLOGW("GLVideoContext::GetCurrentFramebuffer");
         if (gamePass != nullptr) {
             return gamePass->GetFrameBuffer();
         }
@@ -230,6 +232,11 @@ namespace libRetroRunner {
             GLVIDEOLOGE("video init failed, this may cause render error.");
             return;
         }
+
+#if(ENABLE_GL_DEBUG)
+        initializeGLESLogCallbackIfNeeded();
+#endif
+
         OnGameGeometryChanged();
 
         auto appContext = AppContext::Instance();
@@ -250,7 +257,9 @@ namespace libRetroRunner {
 
     void GLVideoContext::OnGameGeometryChanged() {
         auto env = AppContext::Instance()->GetEnvironment();
-        gamePass = std::make_unique<GLShaderPass>(nullptr, nullptr);
+        if(gamePass == nullptr)
+            gamePass = std::make_unique<GLShaderPass>(nullptr, nullptr);
+        gamePass->SetPixelFormat(env->pixelFormat);
         gamePass->CreateFrameBuffer(env->gameGeometryWidth, env->gameGeometryHeight, true, env->renderUseDepth, env->renderUseStencil);
     }
 }

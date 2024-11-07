@@ -20,6 +20,8 @@ namespace libRetroRunner {
 
         void SetLinear(bool flag);
 
+        void SetPixelFormat(unsigned int format);
+
         void Create(bool includeDepth, bool includeStencil);
 
         void Destroy();
@@ -38,6 +40,8 @@ namespace libRetroRunner {
         }
 
     private:
+        unsigned int pixel_format;
+
         bool linear;
         bool depth;
 

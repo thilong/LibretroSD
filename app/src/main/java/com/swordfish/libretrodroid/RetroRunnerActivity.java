@@ -26,8 +26,10 @@ public class RetroRunnerActivity extends AppCompatActivity {
             testCore = "libfceumm.so";
             FileUtil.copyFromAsses(this, "demo.nes", testRom);
         } else if (platform.equals("dc")) {
-            testRom = getFilesDir().getAbsolutePath() + "/lc.chd";
+            testRom = getExternalFilesDir(null).getAbsolutePath() + "/bj.cdi";
+            //testRom = getFilesDir().getAbsolutePath() + "/lc.chd";
             testCore = "libflycast.so";
+            FileUtil.copyFromAsses(this, "bj.cdi", testRom);
         }
 
         RunConfig runConfig = new RunConfig();

@@ -3,11 +3,12 @@
 //
 #include "shader_pass_gl.h"
 #include "../rr_log.h"
+#include "../libretro-common/include/libretro.h"
 
-#define SP_LOGD(...) LOGD("[VIDEO] " __VA_ARGS__)
-#define SP_LOGW(...) LOGW("[VIDEO] " __VA_ARGS__)
-#define SP_LOGE(...) LOGE("[VIDEO] " __VA_ARGS__)
-#define SP_LOGI(...) LOGI("[VIDEO] " __VA_ARGS__)
+#define LOGD_SP(...) LOGD("[VIDEO]:[SHADERPASS] " __VA_ARGS__)
+#define LOGW_SP(...) LOGW("[VIDEO]:[SHADERPASS] " __VA_ARGS__)
+#define LOGE_SP(...) LOGE("[VIDEO]:[SHADERPASS] " __VA_ARGS__)
+#define LOGI_SP(...) LOGI("[VIDEO]:[SHADERPASS] " __VA_ARGS__)
 
 
 namespace libRetroRunner {
@@ -80,7 +81,7 @@ namespace libRetroRunner {
                     char *buf = (char *) malloc(infoLen);
                     if (buf) {
                         glGetShaderInfoLog(shader, infoLen, nullptr, buf);
-                        SP_LOGE("Could not compile shader %d:\n%s\n",
+                        LOGE_SP("Could not compile shader %d:\n%s\n",
                                 shaderType, buf);
                         free(buf);
                     }
@@ -93,6 +94,7 @@ namespace libRetroRunner {
     }
 
     GLShaderPass::GLShaderPass(const char *vertexShaderCode, char *fragmentShaderCode) {
+        pixelFormat = RETRO_PIXEL_FORMAT_UNKNOWN;
         const char *finalVertexShaderCode = vertexShaderCode ? vertexShaderCode : default_vertex_shader;
         const char *finalFragmentShaderCode = fragmentShaderCode ? fragmentShaderCode : default_fragment_shader;
 
@@ -120,7 +122,7 @@ namespace libRetroRunner {
                     char *buf = (char *) malloc(bufLength);
                     if (buf) {
                         glGetProgramInfoLog(program, bufLength, nullptr, buf);
-                        SP_LOGE("Could not link program:\n%s\n", buf);
+                        LOGE_SP("Could not link program:\n%s\n", buf);
                         free(buf);
                     }
                 }
@@ -158,6 +160,14 @@ namespace libRetroRunner {
     }
 
     void GLShaderPass::CreateFrameBuffer(int width, int height, bool linear, bool includeDepth, bool includeStencil) {
+        if(pixelFormat == RETRO_PIXEL_FORMAT_UNKNOWN){
+            LOGE_SP("pixel format is unknow, can't create frame buffer for %d", pixelFormat);
+            return;
+        }
+        if(frameBuffer != nullptr && width == frameBuffer->GetWidth() && height == frameBuffer->GetHeight()){
+            LOGW_SP("frame buffer not change, reuse it.");
+            return;
+        }
         frameBuffer = std::make_unique<GLHardwareFrameBuffer>();
         frameBuffer->SetSize(width, height);
         frameBuffer->SetLinear(linear);
@@ -235,7 +245,7 @@ namespace libRetroRunner {
                     char *buf = (char *) malloc(bufLength);
                     if (buf) {
                         glGetProgramInfoLog(program, bufLength, nullptr, buf);
-                        SP_LOGE("Could not link program:\n%s\n", buf);
+                        LOGE_SP("Could not link program:\n%s\n", buf);
                         free(buf);
                     }
                 }

@@ -29,14 +29,16 @@ namespace libRetroRunner {
         Destroy();
         depth = includeDepth;
 
+        GL_CHECK("create  ");
         //create texture for fbo
         glGenTextures(1, &texture_id);
+        GL_CHECK("create texture ");
         glBindTexture(GL_TEXTURE_2D, texture_id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linear ? GL_LINEAR : GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8_OES, width, height);
 
         GL_CHECK("create texture storage");
 
@@ -123,6 +125,10 @@ namespace libRetroRunner {
 
     GLuint GLHardwareFrameBuffer::GetTexture() {
         return texture_id;
+    }
+
+    void GLHardwareFrameBuffer::SetPixelFormat(unsigned int format) {
+        this->pixel_format = format;
     }
 }
 

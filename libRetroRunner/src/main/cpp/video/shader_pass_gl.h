@@ -24,6 +24,10 @@ namespace libRetroRunner {
         void DrawTexture(GLuint textureId , unsigned viewWidth = 0, unsigned viewHeight = 0);
 
     public:
+        inline void SetPixelFormat(int format){
+            pixelFormat = format;
+        }
+
         //以下为shader相关
         inline GLuint GetProgramId() {
             return programId;
@@ -80,6 +84,8 @@ namespace libRetroRunner {
 
     private:
         std::unique_ptr<GLHardwareFrameBuffer> frameBuffer;
+
+        unsigned int pixelFormat;
 
         GLuint programId = 0;
         GLuint vertexShader = 0;
