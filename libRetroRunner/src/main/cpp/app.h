@@ -84,18 +84,18 @@ namespace libRetroRunner {
 
     private:
 
-        std::string rom_path;
-        std::string core_path;
-        std::string system_path;
-        std::string save_path;
+        std::string rom_path = "";
+        std::string core_path = "";
+        std::string system_path = "";
+        std::string save_path = "";
 
-        int state;
+        int state = 0;
         threadsafe_queue<int> commands;   //等待处理的命令
 
-        std::unique_ptr<Core> core;
-        std::unique_ptr<Environment> environment;
-        std::unique_ptr<VideoContext> video;
-        std::unique_ptr<Input> input;
+        std::unique_ptr<Core> core = nullptr;
+        std::unique_ptr<Environment> environment  = nullptr;
+        std::unique_ptr<VideoContext> video  = nullptr;
+        std::unique_ptr<Input> input  = nullptr;
 
         static std::unique_ptr<AppContext> instance;
 

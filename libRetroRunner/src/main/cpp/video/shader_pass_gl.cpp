@@ -179,6 +179,8 @@ namespace libRetroRunner {
     //否则，直接绘制frameBuffer的内容到屏幕上
     void GLShaderPass::DrawTexture(GLuint textureId, unsigned viewWidth, unsigned viewHeight) {
         bool renderToScreen = textureId == 0;
+        if(!renderToScreen)
+            glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->GetFrameBuffer());
 
         glUseProgram(programId);
 
@@ -207,7 +209,7 @@ namespace libRetroRunner {
         } else {
             glBindTexture(GL_TEXTURE_2D, textureId);
             glUniform1i(attr_texture, 0);
-            glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->GetFrameBuffer());
+            //glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->GetFrameBuffer());
         }
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
@@ -217,6 +219,10 @@ namespace libRetroRunner {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    void GLShaderPass::DrawToScreen(unsigned int viewWidth, unsigned int viewHeight) {
+        DrawTexture(0, viewWidth, viewHeight);
     }
 
 

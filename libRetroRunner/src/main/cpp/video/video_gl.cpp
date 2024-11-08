@@ -2,6 +2,8 @@
 // Created by aidoo on 2024/11/5.
 //
 
+#include <unistd.h>
+
 #include <android/native_window_jni.h>
 #include <android/native_window.h>
 #include <GLES2/gl2.h>
@@ -51,7 +53,7 @@ namespace libRetroRunner {
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
             debugCallback((void *) MessageCallback, nullptr);
             LOGW("GL debug callback enabled.");
-        }else{
+        } else {
             LOGW("cant find symbol of glDebugMessageCallback, log wont show up.");
         }
         return true;
@@ -127,7 +129,6 @@ namespace libRetroRunner {
         }
 
 
-
     }
 
     void GLVideoContext::OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) {
@@ -142,7 +143,7 @@ namespace libRetroRunner {
                 }
                 //把核心渲染的数据写入到gameTexture上
                 gameTexture->WriteTextureData(data, width, height, appContext->GetEnvironment()->pixelFormat);
-                GL_CHECK2("gameTexture->WriteTextureData", "frame: %llu", frame_count);
+
                 /*
                 if (gameRender == nullptr) {
                     gameRender = std::make_unique<SoftwareRender>();
@@ -157,9 +158,6 @@ namespace libRetroRunner {
             }
             DrawFrame();
         }
-
-
-
         frame_count++;
     }
 
@@ -170,6 +168,15 @@ namespace libRetroRunner {
             return;
         }
         do {
+            eglContextMakeCurrent();
+            //for test frame buffer
+            if(true){
+                glBindFramebuffer(GL_FRAMEBUFFER, gamePass->GetFrameBuffer());
+                glViewport(0, 0, gamePass->GetWidth(), gamePass->GetHeight());
+                glClearColor(0, 1, 0, 1);
+                glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            }
             /*
             glViewport(0, 0, current_width, current_height);
             if (frame_count % 60 == 0) {
@@ -179,10 +186,8 @@ namespace libRetroRunner {
             }
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             */
-            GLVIDEOLOGD("draw frame: %d x %d", current_width, current_height);
-            GL_CHECK("before draw frame")
-            gamePass->DrawTexture(0, current_width, current_height);
-            GL_CHECK("end draw frame")
+            //GLVIDEOLOGD("draw frame: %d x %d", current_width, current_height);
+            gamePass->DrawToScreen(current_width, current_height);
             eglSwapBuffers(eglDisplay, eglSurface);
         } while ((false));
 
@@ -220,7 +225,7 @@ namespace libRetroRunner {
     }
 
     unsigned int GLVideoContext::GetCurrentFramebuffer() {
-        //GLVIDEOLOGW("GLVideoContext::GetCurrentFramebuffer");
+        //return 0;
         if (gamePass != nullptr) {
             return gamePass->GetFrameBuffer();
         }
@@ -237,8 +242,8 @@ namespace libRetroRunner {
         initializeGLESLogCallbackIfNeeded();
 #endif
 
-        OnGameGeometryChanged();
 
+        OnGameGeometryChanged();
         auto appContext = AppContext::Instance();
         auto env = appContext->GetEnvironment();
         if (env->renderUseHWAcceleration) {
@@ -257,7 +262,7 @@ namespace libRetroRunner {
 
     void GLVideoContext::OnGameGeometryChanged() {
         auto env = AppContext::Instance()->GetEnvironment();
-        if(gamePass == nullptr)
+        if (gamePass == nullptr)
             gamePass = std::make_unique<GLShaderPass>(nullptr, nullptr);
         gamePass->SetPixelFormat(env->pixelFormat);
         gamePass->CreateFrameBuffer(env->gameGeometryWidth, env->gameGeometryHeight, true, env->renderUseDepth, env->renderUseStencil);

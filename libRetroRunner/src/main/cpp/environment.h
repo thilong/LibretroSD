@@ -60,8 +60,8 @@ namespace libRetroRunner {
     private:
         std::unordered_map<std::string, struct Variable> variables;
         bool variablesChanged = false;
-        std::string systemPath;
-        std::string savePath;
+        std::string systemPath = "";
+        std::string savePath = "";
 
         unsigned int language = RETRO_LANGUAGE_ENGLISH;
         bool audioEnabled = true;
@@ -81,11 +81,13 @@ namespace libRetroRunner {
         bool renderUseDepth;
         bool renderUseStencil;
 
-        retro_hw_context_reset_t renderContextReset;
-        retro_hw_context_reset_t renderContextDestroy;
+        retro_hw_context_reset_t renderContextReset = nullptr;
+        retro_hw_context_reset_t renderContextDestroy= nullptr;
 
-        unsigned int gameGeometryHeight;
-        unsigned int gameGeometryWidth;
+        unsigned int gameGeometryHeight = 0;
+        unsigned int gameGeometryWidth = 0;
+        unsigned int gameGeometryMaxHeight = 0;
+        unsigned int gameGeometryMaxWidth = 0;
         float gameGeometryAspectRatio;
 
         retro_disk_control_callback *diskControllerCallback;

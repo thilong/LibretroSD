@@ -23,6 +23,7 @@ namespace libRetroRunner {
 
         void DrawTexture(GLuint textureId , unsigned viewWidth = 0, unsigned viewHeight = 0);
 
+        void DrawToScreen(unsigned viewWidth, unsigned viewHeight);
     public:
         inline void SetPixelFormat(int format){
             pixelFormat = format;

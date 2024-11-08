@@ -9,16 +9,17 @@
 #include "rr_log.h"
 #include "utils/utils.h"
 
-#define APPLOGD(...) LOGD("[RUNNER] " __VA_ARGS__)
-#define APPLOGW(...) LOGW("[RUNNER] " __VA_ARGS__)
-#define APPLOGE(...) LOGE("[RUNNER] " __VA_ARGS__)
-#define APPLOGI(...) LOGI("[RUNNER] " __VA_ARGS__)
+#define LOGD_APP(...) LOGD("[RUNNER] " __VA_ARGS__)
+#define LOGW_APP(...) LOGW("[RUNNER] " __VA_ARGS__)
+#define LOGE_APP(...) LOGE("[RUNNER] " __VA_ARGS__)
+#define LOGI_APP(...) LOGI("[RUNNER] " __VA_ARGS__)
 
 namespace libRetroRunner {
     extern "C" JavaVM *gVm;
 
     static void *appThread(void *args) {
         ((AppContext *) args)->ThreadLoop();
+        LOGW_APP("emu thread exit.");
         return nullptr;
     }
 
@@ -31,6 +32,7 @@ namespace libRetroRunner {
 
     AppContext::AppContext() {
 
+
     }
 
     AppContext::~AppContext() {
@@ -38,6 +40,11 @@ namespace libRetroRunner {
             instance = nullptr;
         }
         BIT_CLEAR(state, AppState::kRunning);
+
+        core_path = "";
+        system_path = "";
+        rom_path = "";
+        save_path = "";
 
         input = nullptr;
         core = nullptr;
@@ -63,9 +70,11 @@ namespace libRetroRunner {
 
     void AppContext::SetVideoRenderTarget(void **args, int argc) {
         if (args == nullptr) {
+            LOGW_APP("unload video component");
             //clear video
             this->AddCommand(AppCommands::kUnloadVideo);
         } else {
+            LOGW_APP("create new video component");
             //create video
             this->video = VideoContext::NewInstance();
             this->video->SetSurface(args[0], args[1]);
@@ -81,13 +90,14 @@ namespace libRetroRunner {
 
     void AppContext::Start() {
         if (!BIT_TEST(state, AppState::kPathSet)) {
-            APPLOGE("Paths are empty , can't start");
+            LOGE_APP("Paths are empty , can't start");
             return;
         }
         AddCommand(AppCommands::kLoadCore);
         AddCommand(AppCommands::kLoadContent);
         pthread_t thread;
-        pthread_create(&thread, nullptr, libRetroRunner::appThread, this);
+        int loopRet = pthread_create(&thread, nullptr, libRetroRunner::appThread, this);
+        LOGD_APP("emu started, app: %p, thread result: %d" , this, loopRet);
     }
 
     void AppContext::Pause() {
@@ -113,15 +123,16 @@ namespace libRetroRunner {
         JNIEnv *env;
         try {
             while (BIT_TEST(state, AppState::kRunning)) {
+
                 if (BIT_TEST(state, AppState::kPaused)) {
                     //sleep for 16ms, for 60fps
                     usleep(16000);
+                    LOGD_APP("emu thread pased...");
                     continue;
                 }
                 processCommand();
                 //只有视频和内容都准备好了才能运行
                 if (BIT_TEST(state, AppState::kVideoReady) && BIT_TEST(state, AppState::kContentReady)) {
-                    APPLOGD("emu retro_run");
                     gVm->AttachCurrentThread(&env, nullptr);
                     core->retro_run();
                     gVm->DetachCurrentThread();
@@ -130,10 +141,10 @@ namespace libRetroRunner {
                 }
             }
         } catch (std::exception &exception) {
-            APPLOGE("emu end with error: %s", exception.what());
+            LOGE_APP("emu end with error: %s", exception.what());
         }
         BIT_CLEAR(state, AppState::kRunning);
-        APPLOGE("emu stopped");
+        LOGE_APP("emu stopped");
     }
 
     /*-----App Commands--------------------------------------------------------------*/
@@ -166,7 +177,7 @@ namespace libRetroRunner {
     }
 
     void AppContext::cmdLoadCore() {
-        APPLOGD("cmd: load core -> %s", core_path.c_str());
+        LOGD_APP("cmd: load core -> %s", core_path.c_str());
         try {
             core = std::make_unique<Core>(this->core_path);
 
@@ -188,18 +199,18 @@ namespace libRetroRunner {
             BIT_SET(state, AppState::kCoreReady);
         } catch (std::exception &exception) {
             core = nullptr;
-            APPLOGE("load core failed");
+            LOGE_APP("load core failed");
         }
     }
 
     void AppContext::cmdLoadContent() {
-        APPLOGD("command: load content: %s", rom_path.c_str());
+        LOGD_APP("command: load content: %s", rom_path.c_str());
         if (BIT_TEST(state, AppState::kContentReady)) {
-            APPLOGE("content already loaded");
+            LOGE_APP("content already loaded");
             return;
         }
         if (!BIT_TEST(state, AppState::kCoreReady)) {
-            APPLOGE("try to load content, but core is not ready yet!!!");
+            LOGE_APP("try to load content, but core is not ready yet!!!");
             return;
         }
 
@@ -222,7 +233,7 @@ namespace libRetroRunner {
 
         bool result = core->retro_load_game(&game_info);
         if (!result) {
-            APPLOGE("Cannot load game. Leaving.");
+            LOGE_APP("Cannot load game. Leaving.");
             throw std::runtime_error("Cannot load game");
         }
 
@@ -237,7 +248,7 @@ namespace libRetroRunner {
     }
 
     void AppContext::cmdInitVideo() {
-        APPLOGD("cmd: init video");
+        LOGD_APP("cmd: init video");
         JNIEnv *env;
         gVm->AttachCurrentThread(&env, nullptr);
         video->Init();
@@ -247,7 +258,7 @@ namespace libRetroRunner {
     }
 
     void AppContext::cmdUnloadVideo() {
-        APPLOGD("cmd: unload video");
+        LOGD_APP("cmd: unload video");
         JNIEnv *env;
         gVm->AttachCurrentThread(&env, nullptr);
         video = nullptr;

@@ -914,27 +914,20 @@ enum retro_mod
 #define RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE 13
 
 /**
- * Requests that a frontend enable a particular hardware rendering API.
+ * 请求前端启用特定的硬件渲染 API。
  *
- * If successful, the frontend will create a context (and other related resources)
- * that the core can use for rendering.
- * The framebuffer will be at least as large as
- * the maximum dimensions provided in <tt>retro_get_system_av_info</tt>.
+ * 前端创建一个上下文 (和其他的资源) 供核心用于渲染.
+ * framebuffer 至少要和retro_get_system_av_info提供的最大解析度一样大.
  *
  * @param[in, out] data <tt>struct retro_hw_render_callback *</tt>.
- * Pointer to the hardware render callback struct.
- * Used to define callbacks for the hardware-rendering life cycle,
- * as well as to request a particular rendering API.
- * @return \c true if the environment call is recognized
- * and the requested rendering API is supported.
- * \c false if \c data is \c NULL
- * or the frontend can't provide the requested rendering API.
+ * 指向硬件渲染回调结构体， 用于定义硬件渲染组件的生命周期,也用于请求特定的渲染API.
+ * @return \c true 如果前端支持需要的硬件渲染环境.
+ * \c false data为NULL或者前端不支持 .
  * @see retro_hw_render_callback
  * @see retro_video_refresh_t
  * @see RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER
  * @note Should be called in <tt>retro_load_game()</tt>.
- * @note If HW rendering is used, pass only \c RETRO_HW_FRAME_BUFFER_VALID or
- * \c NULL to <tt>retro_video_refresh_t</tt>.
+ * @note 如果使用硬件渲染，则需要在retro_video_refresh_t传入 RETRO_HW_FRAME_BUFFER_VALID 或者 NULL.
  */
 #define RETRO_ENVIRONMENT_SET_HW_RENDER 14
 

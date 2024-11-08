@@ -12,7 +12,6 @@ template<typename T>
 class threadsafe_queue {
 private:
     mutable std::mutex mut;
-    mutable std::condition_variable data_cond;
     using queue_type = std::queue<T>;
     queue_type data_queue;
 public:
@@ -42,16 +41,6 @@ public:
     void push(const value_type &new_value) {
         std::lock_guard<std::mutex> lk(mut);
         data_queue.push(std::move(new_value));
-        data_cond.notify_one();
-    }
-
-
-    value_type wait_and_pop() {
-        std::unique_lock<std::mutex> lk(mut);
-        data_cond.wait(lk, [this] { return !this->data_queue.empty(); });
-        auto value = std::move(data_queue.front());
-        data_queue.pop();
-        return value;
     }
 
     bool try_pop(value_type &value) {

@@ -6,10 +6,10 @@
 #include "../rr_log.h"
 #include <stdexcept>
 
-#define FBOLOGD(...) LOGD("[VIDEO] " __VA_ARGS__)
-#define FBOLOGW(...) LOGW("[VIDEO] " __VA_ARGS__)
-#define FBOLOGE(...) LOGE("[VIDEO] " __VA_ARGS__)
-#define FBOLOGI(...) LOGI("[VIDEO] " __VA_ARGS__)
+#define LOGD_FBO(...) LOGD("[VIDEO] " __VA_ARGS__)
+#define LOGW_FBO(...) LOGW("[VIDEO] " __VA_ARGS__)
+#define LOGE_FBO(...) LOGE("[VIDEO] " __VA_ARGS__)
+#define LOGI_FBO(...) LOGI("[VIDEO] " __VA_ARGS__)
 
 
 namespace libRetroRunner {
@@ -29,10 +29,8 @@ namespace libRetroRunner {
         Destroy();
         depth = includeDepth;
 
-        GL_CHECK("create  ");
         //create texture for fbo
         glGenTextures(1, &texture_id);
-        GL_CHECK("create texture ");
         glBindTexture(GL_TEXTURE_2D, texture_id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -40,22 +38,14 @@ namespace libRetroRunner {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
         glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8_OES, width, height);
 
-        GL_CHECK("create texture storage");
-
         glGenFramebuffers(1, &frame_buffer);
-        GL_CHECK("gen frame buffer.");
 
         if (depth) {
             glGenRenderbuffers(1, &depth_buffer);
-
-            GL_CHECK("gen render buffer.");
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
-
-        GL_CHECK("gen frame buffer texture.")
-
         if (depth) {
             glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
             glRenderbufferStorage(
@@ -64,7 +54,6 @@ namespace libRetroRunner {
                     width,
                     height
             );
-            GL_CHECK("gen render buffer storage.")
             glFramebufferRenderbuffer(
                     GL_FRAMEBUFFER,
                     GL_DEPTH_ATTACHMENT,
@@ -79,19 +68,18 @@ namespace libRetroRunner {
                         depth_buffer
                 );
             }
-            GL_CHECK("bind render buffer to frame buffer.");
         }
 
         int frameBufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (frameBufferStatus != GL_FRAMEBUFFER_COMPLETE) {
-            FBOLOGE("Error creating framebuffer %d not complete, status: %d, error: %d, %s", frame_buffer, frameBufferStatus, glGetError(), glGetString(glGetError()));
+            LOGE_FBO("Error creating framebuffer %d not complete, status: %d, error: %d, %s", frame_buffer, frameBufferStatus, glGetError(), glGetString(glGetError()));
             throw std::runtime_error("Cannot create framebuffer");
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        FBOLOGD("new frame buffer created: %d, %d x %d", frame_buffer, width, height);
+        LOGD_FBO("Frame buffer created, id:%d, size:%d x %d", frame_buffer, width, height);
     }
 
     void GLHardwareFrameBuffer::Destroy() {

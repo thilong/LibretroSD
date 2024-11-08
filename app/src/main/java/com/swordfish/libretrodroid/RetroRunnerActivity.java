@@ -37,6 +37,7 @@ public class RetroRunnerActivity extends AppCompatActivity {
         runConfig.setCorePath(testCore);
         runConfig.setSystemPath(getFilesDir().getAbsolutePath());
         runConfig.setSavePath(getExternalFilesDir(null).getAbsolutePath());
+
         retroRunnerView = new RetroRunnerView(this, runConfig);
         retroRunnerView.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
         setContentView(retroRunnerView);

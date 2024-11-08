@@ -43,11 +43,15 @@ namespace libRetroRunner {
         }       \
     }while(false)
 
+#define GL_ERROR_STRING(_ERR_) \
+    ((_ERR_ != 1280 && _ERR_ != 1282) ? glGetString(_ERR_) : (const GLubyte*)"GL_INVALID_ENUM")
+
+
 #define GL_CHECK(_FMT_) \
      do { \
         GLenum err = glGetError(); \
         if (err != GL_NO_ERROR) { \
-            LOGE("[VIDEO] " _FMT_ " glCheckError: %d - %s at: %s:%d", err, glGetString(err), __FILE_NAME__, __LINE__); \
+            LOGE("[VIDEO] " _FMT_ " glCheckError: %d - %s at: %s:%d", err, GL_ERROR_STRING(err), __FILE_NAME__, __LINE__); \
         } \
     } while (false);
 
@@ -55,7 +59,7 @@ namespace libRetroRunner {
      do { \
         GLenum err = glGetError(); \
         if (err != GL_NO_ERROR) { \
-            LOGE("[VIDEO] " _FMT_ " glCheckError: %d - %s at: %s:%d, " _FMT2_, err, glGetString(err), __FILE_NAME__, __LINE__, __VA_ARGS__); \
+            LOGE("[VIDEO] " _FMT_ " glCheckError: %d - %s at: %s:%d, " _FMT2_, err, GL_ERROR_STRING(err), __FILE_NAME__, __LINE__, __VA_ARGS__); \
         } \
     } while (false);
 

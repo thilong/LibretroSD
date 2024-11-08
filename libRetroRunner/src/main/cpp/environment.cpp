@@ -66,7 +66,6 @@ namespace libRetroRunner {
                 return true;
             }
             case RETRO_ENVIRONMENT_SET_HW_RENDER: {
-                LOGD_Env("call RETRO_ENVIRONMENT_SET_HW_RENDER -> set hardware render");
                 return cmdSetHardwareRender(data);
             }
             case RETRO_ENVIRONMENT_GET_VARIABLE: {
@@ -505,6 +504,7 @@ namespace libRetroRunner {
 
     uintptr_t Environment::CoreCallbackGetCurrentFrameBuffer() {
         //TODO:已经被标记为过时，前端不应该返回预先分配的缓冲区、
+        //如果返回，应该返回最大的像素环境
         uintptr_t ret = 0;
         auto appContext = AppContext::Instance();
         if (appContext) {
@@ -513,7 +513,6 @@ namespace libRetroRunner {
                 ret = (uintptr_t) video->GetCurrentFramebuffer();
             }
         }
-        LOGD_Env("call CoreCallbackGetCurrentFrameBuffer -> %u", ret);
         return ret;
     }
 
