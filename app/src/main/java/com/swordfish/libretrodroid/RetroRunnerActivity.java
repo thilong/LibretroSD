@@ -1,5 +1,6 @@
 package com.swordfish.libretrodroid;
 
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -16,9 +17,11 @@ public class RetroRunnerActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        //force landscape
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.onCreate(savedInstanceState);
 
-        String platform = "dc";
+        String platform = "nes";
         String testRom = "";
         String testCore = "";
         if (platform.equals("nes")) {
@@ -30,6 +33,9 @@ public class RetroRunnerActivity extends AppCompatActivity {
             //testRom = getFilesDir().getAbsolutePath() + "/lc.chd";
             testCore = "libflycast.so";
             FileUtil.copyFromAsses(this, "bj.cdi", testRom);
+        } else if(platform.equals("psp")){
+            testRom = getExternalFilesDir(null).getAbsolutePath() + "/psp.iso";
+            testCore = "libppsspp.so";
         }
 
         RunConfig runConfig = new RunConfig();

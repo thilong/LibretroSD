@@ -49,6 +49,7 @@ target_link_libraries(RetroRunner
         log
         EGL
         oboe
+        GLESv2
         GLESv3
 )
 

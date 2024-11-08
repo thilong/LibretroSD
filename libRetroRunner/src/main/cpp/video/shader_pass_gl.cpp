@@ -10,10 +10,12 @@
 #define LOGE_SP(...) LOGE("[VIDEO]:[SHADERPASS] " __VA_ARGS__)
 #define LOGI_SP(...) LOGI("[VIDEO]:[SHADERPASS] " __VA_ARGS__)
 
-
+//静态变量与公共方法
 namespace libRetroRunner {
 
     const char *default_vertex_shader = R"delimiter(
+            #extension GL_OES_standard_derivatives : enable
+
             attribute vec4 a_position;  // position of the quad
             attribute vec2 a_texCoord;  // texture coordinates
             varying vec2 v_texCoord;    // pass texture coords to fragment shader
@@ -24,6 +26,8 @@ namespace libRetroRunner {
             }
             )delimiter";
     const char *default_fragment_shader = R"delimiter(
+            #extension GL_OES_standard_derivatives : enable
+
             precision mediump float;
             uniform sampler2D u_texture;
             varying vec2 v_texCoord;
@@ -92,7 +96,10 @@ namespace libRetroRunner {
         }
         return shader;
     }
+}
 
+//GLShaderPass定义
+namespace libRetroRunner {
     GLShaderPass::GLShaderPass(const char *vertexShaderCode, char *fragmentShaderCode) {
         pixelFormat = RETRO_PIXEL_FORMAT_UNKNOWN;
         const char *finalVertexShaderCode = vertexShaderCode ? vertexShaderCode : default_vertex_shader;
@@ -160,11 +167,11 @@ namespace libRetroRunner {
     }
 
     void GLShaderPass::CreateFrameBuffer(int width, int height, bool linear, bool includeDepth, bool includeStencil) {
-        if(pixelFormat == RETRO_PIXEL_FORMAT_UNKNOWN){
+        if (pixelFormat == RETRO_PIXEL_FORMAT_UNKNOWN) {
             LOGE_SP("pixel format is unknow, can't create frame buffer for %d", pixelFormat);
             return;
         }
-        if(frameBuffer != nullptr && width == frameBuffer->GetWidth() && height == frameBuffer->GetHeight()){
+        if (frameBuffer != nullptr && width == frameBuffer->GetWidth() && height == frameBuffer->GetHeight()) {
             LOGW_SP("frame buffer not change, reuse it.");
             return;
         }
@@ -175,12 +182,18 @@ namespace libRetroRunner {
         GL_CHECK("GLShaderPass::CreateFrameBuffer");
     }
 
+    void GLShaderPass::DrawToScreen(unsigned int viewWidth, unsigned int viewHeight) {
+        DrawTexture(0, viewWidth, viewHeight);
+    }
+
     //如果textureId大于0，则表示把textureId的内容绘制到frameBuffer上
     //否则，直接绘制frameBuffer的内容到屏幕上
     void GLShaderPass::DrawTexture(GLuint textureId, unsigned viewWidth, unsigned viewHeight) {
         bool renderToScreen = textureId == 0;
-        if(!renderToScreen)
+        if (!renderToScreen)   //如果不是渲染到屏幕，则绘制到当前这个frameBuffer上
             glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->GetFrameBuffer());
+        else
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glUseProgram(programId);
 
@@ -188,18 +201,14 @@ namespace libRetroRunner {
         if (viewHeight == 0) viewHeight = frameBuffer->GetHeight();
         glViewport(0, 0, viewWidth, viewHeight);
 
-
         //set position
         glEnableVertexAttribArray(attr_position);
         glVertexAttribPointer(attr_position, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
 
         //set vertex
         glEnableVertexAttribArray(attr_coordinate);
-        if (renderToScreen) {
-            glVertexAttribPointer(attr_coordinate, 2, GL_FLOAT, GL_FALSE, 0, gFlipTextureCoords);
-        } else {
-            glVertexAttribPointer(attr_coordinate, 2, GL_FLOAT, GL_FALSE, 0, gTextureCoords);
-        }
+        //如果是渲染到屏幕，因为opengl(左下为原点)与libretro(左上为原点)的图像坐标系不一样的原因，需要翻转图片
+        glVertexAttribPointer(attr_coordinate, 2, GL_FLOAT, GL_FALSE, 0, renderToScreen ? gFlipTextureCoords : gTextureCoords);
 
         //set texture
         glActiveTexture(GL_TEXTURE0);
@@ -209,7 +218,6 @@ namespace libRetroRunner {
         } else {
             glBindTexture(GL_TEXTURE_2D, textureId);
             glUniform1i(attr_texture, 0);
-            //glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->GetFrameBuffer());
         }
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
@@ -217,14 +225,15 @@ namespace libRetroRunner {
         glDisableVertexAttribArray(attr_position);
         glDisableVertexAttribArray(attr_coordinate);
 
+        glUseProgram(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+}
 
-    void GLShaderPass::DrawToScreen(unsigned int viewWidth, unsigned int viewHeight) {
-        DrawTexture(0, viewWidth, viewHeight);
-    }
-
+//SoftwareRender定义，会被弃用
+namespace libRetroRunner {
+    //以下SoftwareRender为测试代码，会被弃用
 
     SoftwareRender::SoftwareRender() {
         vertexShader = _loadShader(GL_VERTEX_SHADER, default_vertex_shader);

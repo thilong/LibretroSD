@@ -8,7 +8,6 @@
 #include <android/native_window.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <GLES3/gl32.h>
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -19,15 +18,16 @@
 #include "../environment.h"
 
 
-#define GLVIDEOLOGD(...) LOGD("[VIDEO] " __VA_ARGS__)
-#define GLVIDEOLOGW(...) LOGW("[VIDEO] " __VA_ARGS__)
-#define GLVIDEOLOGE(...) LOGE("[VIDEO] " __VA_ARGS__)
-#define GLVIDEOLOGI(...) LOGI("[VIDEO] " __VA_ARGS__)
+#define LOGD_GLVIDEO(...) LOGD("[VIDEO] " __VA_ARGS__)
+#define LOGW_GLVIDEO(...) LOGW("[VIDEO] " __VA_ARGS__)
+#define LOGE_GLVIDEO(...) LOGE("[VIDEO] " __VA_ARGS__)
+#define LOGI_GLVIDEO(...) LOGI("[VIDEO] " __VA_ARGS__)
 #define ENABLE_GL_DEBUG 1
 namespace libRetroRunner {
 
     extern "C" JavaVM *gVm;
 
+#ifdef HAVE_GLES3
     static void MessageCallback(
             GLenum source,
             GLenum type,
@@ -58,6 +58,7 @@ namespace libRetroRunner {
         }
         return true;
     }
+#endif
 }
 namespace libRetroRunner {
     GLVideoContext::GLVideoContext() : VideoContext() {
@@ -74,123 +75,23 @@ namespace libRetroRunner {
         Destroy();
     }
 
-    void GLVideoContext::SetSurface(void *envObj, void *surfaceObj) {
-        JNIEnv *env = (JNIEnv *) envObj;
-        jobject surface = (jobject) surfaceObj;
-
-        ANativeWindow *window = ANativeWindow_fromSurface(env, surface);
-        EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-        if (display == EGL_NO_DISPLAY) {
-            GLVIDEOLOGD("egl have not got display.");
-            return;
-        }
-        if (eglInitialize(display, 0, 0) != EGL_TRUE) {
-            GLVIDEOLOGD("egl Initialize failed.%d", eglGetError());
-            return;
-        }
-        eglDisplay = display;
-        const EGLint atrrs[] = {
-                EGL_ALPHA_SIZE, 8,
-                EGL_RED_SIZE, 8,
-                EGL_BLUE_SIZE, 8,
-                EGL_GREEN_SIZE, 8,
-                EGL_DEPTH_SIZE, 16,
-                EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
-                EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-                EGL_NONE
-        };
-        //opengl es2: EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-        EGLConfig eglConfig;
-        EGLint numOfEglConfig;
-        if (eglChooseConfig(display, atrrs, &eglConfig, 1, &numOfEglConfig) != EGL_TRUE) {
-            GLVIDEOLOGE("egl choose config failed.%d,", eglGetError());
+    void GLVideoContext::Init() {
+        if (!eglContextMakeCurrent()) {
+            LOGE_GLVIDEO("video init failed, this may cause render error.");
             return;
         }
 
-        EGLint attributes[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
-        eglContext = eglCreateContext(display, eglConfig, nullptr, attributes);
-        if (!eglContext) {
-            GLVIDEOLOGE("eglCreateContext failed.");
-            return;
+#if defined(HAVE_GLES3) && (ENABLE_GL_DEBUG)
+        initializeGLESLogCallbackIfNeeded();
+#endif
+
+        makeBackBuffer();
+        auto appContext = AppContext::Instance();
+        auto env = appContext->GetEnvironment();
+        if (env->renderUseHWAcceleration) {
+            env->renderContextReset();
         }
-
-        EGLint format;
-        if (!eglGetConfigAttrib(display, eglConfig, EGL_NATIVE_VISUAL_ID, &format)) {
-            GLVIDEOLOGE("egl get config attrib failed.");
-            return;
-        }
-
-        ANativeWindow_acquire(window);
-        ANativeWindow_setBuffersGeometry(window, 0, 0, format);
-        eglSurface = eglCreateWindowSurface(display, eglConfig, window, 0);
-        if (!eglSurface) {
-            GLVIDEOLOGE("eglCreateWindowSurface failed.");
-            return;
-        }
-
-
-    }
-
-    void GLVideoContext::OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) {
-        if (is_ready && data != nullptr) {
-            if (data != RETRO_HW_FRAME_BUFFER_VALID) {
-                auto appContext = AppContext::Instance();
-                //如果没有使用硬件加速，则需要创建一个软件纹理
-                if (gameTexture == nullptr || gameTexture->GetWidth() != width || gameTexture->GetHeight() != height) {
-                    gameTexture = std::make_unique<SoftwareTextureBuffer>();
-                    gameTexture->Create(width, height);
-                    GL_CHECK2("gameTexture->Create", "frame: %llu", frame_count);
-                }
-                //把核心渲染的数据写入到gameTexture上
-                gameTexture->WriteTextureData(data, width, height, appContext->GetEnvironment()->pixelFormat);
-
-                /*
-                if (gameRender == nullptr) {
-                    gameRender = std::make_unique<SoftwareRender>();
-                    GL_CHECK2("gameRender->Create", "frame: %llu", frame_count);
-                }
-
-                //渲染(Test)
-                gameRender->Render(current_width, current_height, gameTexture->GetTexture());
-                GL_CHECK2("gameRender->Render", "frame: %llu", frame_count);
-                */
-                gamePass->DrawTexture(gameTexture->GetTexture());
-            }
-            DrawFrame();
-        }
-        frame_count++;
-    }
-
-    void GLVideoContext::DrawFrame() {
-
-        if (current_width == 0 || current_height == 0) {
-            GLVIDEOLOGW("draw frame failed: current_width or current_height is 0.");
-            return;
-        }
-        do {
-            eglContextMakeCurrent();
-            //for test frame buffer
-            if(true){
-                glBindFramebuffer(GL_FRAMEBUFFER, gamePass->GetFrameBuffer());
-                glViewport(0, 0, gamePass->GetWidth(), gamePass->GetHeight());
-                glClearColor(0, 1, 0, 1);
-                glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            }
-            /*
-            glViewport(0, 0, current_width, current_height);
-            if (frame_count % 60 == 0) {
-                glClearColor(1.0, 0, 0, 1.0);
-            } else {
-                glClearColor(0, 1.0, 1.0, 1);
-            }
-            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-            */
-            //GLVIDEOLOGD("draw frame: %d x %d", current_width, current_height);
-            gamePass->DrawToScreen(current_width, current_height);
-            eglSwapBuffers(eglDisplay, eglSurface);
-        } while ((false));
-
+        is_ready = true;
     }
 
     void GLVideoContext::Destroy() {
@@ -219,37 +120,135 @@ namespace libRetroRunner {
         }
     }
 
+    void GLVideoContext::SetSurface(void *envObj, void *surfaceObj) {
+        JNIEnv *env = (JNIEnv *) envObj;
+        jobject surface = (jobject) surfaceObj;
+
+        ANativeWindow *window = ANativeWindow_fromSurface(env, surface);
+        EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        if (display == EGL_NO_DISPLAY) {
+            LOGD_GLVIDEO("egl have not got display.");
+            return;
+        }
+        if (eglInitialize(display, 0, 0) != EGL_TRUE) {
+            LOGD_GLVIDEO("egl Initialize failed.%d", eglGetError());
+            return;
+        }
+        eglDisplay = display;
+        const EGLint atrrs[] = {
+                EGL_ALPHA_SIZE, 8,
+                EGL_RED_SIZE, 8,
+                EGL_BLUE_SIZE, 8,
+                EGL_GREEN_SIZE, 8,
+                EGL_DEPTH_SIZE, 16,
+                EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
+                EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+                EGL_NONE
+        };
+        //opengl es2: EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGLConfig eglConfig;
+        EGLint numOfEglConfig;
+        if (eglChooseConfig(display, atrrs, &eglConfig, 1, &numOfEglConfig) != EGL_TRUE) {
+            LOGE_GLVIDEO("egl choose config failed.%d,", eglGetError());
+            return;
+        }
+
+        EGLint attributes[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
+        eglContext = eglCreateContext(display, eglConfig, nullptr, attributes);
+        if (!eglContext) {
+            LOGE_GLVIDEO("eglCreateContext failed.");
+            return;
+        }
+
+        EGLint format;
+        if (!eglGetConfigAttrib(display, eglConfig, EGL_NATIVE_VISUAL_ID, &format)) {
+            LOGE_GLVIDEO("egl get config attrib failed.");
+            return;
+        }
+
+        ANativeWindow_acquire(window);
+        ANativeWindow_setBuffersGeometry(window, 0, 0, format);
+        EGLint window_attribs[] = {
+                EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
+                EGL_NONE,
+        };
+        eglSurface = eglCreateWindowSurface(display, eglConfig, window, window_attribs);
+        if (!eglSurface) {
+            LOGE_GLVIDEO("eglCreateWindowSurface failed.");
+            return;
+        }
+
+
+    }
+
+    void GLVideoContext::OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) {
+        if (is_ready && data != nullptr) {
+            if (data != RETRO_HW_FRAME_BUFFER_VALID) {
+                LOGD_GLVIDEO("frame: %llu, width: %d, height: %d, pitch: %d", frame_count, width, height, pitch);
+                auto appContext = AppContext::Instance();
+                //如果没有使用硬件加速，则需要创建一个软件纹理
+                if (gameTexture == nullptr || gameTexture->GetWidth() != width || gameTexture->GetHeight() != height) {
+                    gameTexture = std::make_unique<SoftwareTextureBuffer>();
+                    gameTexture->Create(width, height);
+                    GL_CHECK2("gameTexture->Create", "frame: %llu", frame_count);
+                }
+                //把核心渲染的数据写入到gameTexture上
+                gameTexture->WriteTextureData(data, width, height, appContext->GetEnvironment()->pixelFormat);
+                /*
+                if (gameRender == nullptr) {
+                    gameRender = std::make_unique<SoftwareRender>();
+                    GL_CHECK2("gameRender->Create", "frame: %llu", frame_count);
+                }
+
+                //渲染(Test)
+                gameRender->Render(current_width, current_height, gameTexture->GetTexture());
+                GL_CHECK2("gameRender->Render", "frame: %llu", frame_count);
+                */
+                gamePass->DrawTexture(gameTexture->GetTexture());
+            }
+            DrawFrame();
+        }
+        frame_count++;
+    }
+
+    void GLVideoContext::DrawFrame() {
+
+        if (current_width == 0 || current_height == 0) {
+            LOGW_GLVIDEO("draw frame failed: current_width or current_height is 0.");
+            return;
+        }
+        do {
+
+            //LOGD_GLVIDEO("draw frame: %d x %d, thread: %d", current_width, current_height, gettid());
+            gamePass->DrawToScreen(current_width, current_height);
+
+            if (false) {  //只在硬件渲染下使用，用于每一帧的清理
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glDisable(GL_DEPTH_TEST);
+                glDisable(GL_CULL_FACE);
+                glDisable(GL_DITHER);
+
+                glDisable(GL_STENCIL_TEST);
+                glDisable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glBlendEquation(GL_FUNC_ADD);
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            }
+
+        } while ((false));
+
+    }
+
     void GLVideoContext::SetSurfaceSize(unsigned int width, unsigned int height) {
         current_width = width;
         current_height = height;
     }
 
     unsigned int GLVideoContext::GetCurrentFramebuffer() {
-        //return 0;
         if (gamePass != nullptr) {
             return gamePass->GetFrameBuffer();
         }
         return 0;
-    }
-
-    void GLVideoContext::Init() {
-        if (!eglContextMakeCurrent()) {
-            GLVIDEOLOGE("video init failed, this may cause render error.");
-            return;
-        }
-
-#if(ENABLE_GL_DEBUG)
-        initializeGLESLogCallbackIfNeeded();
-#endif
-
-
-        OnGameGeometryChanged();
-        auto appContext = AppContext::Instance();
-        auto env = appContext->GetEnvironment();
-        if (env->renderUseHWAcceleration) {
-            env->renderContextReset();
-        }
-        is_ready = true;
     }
 
     bool GLVideoContext::eglContextMakeCurrent() {
@@ -261,10 +260,23 @@ namespace libRetroRunner {
     }
 
     void GLVideoContext::OnGameGeometryChanged() {
+
+    }
+
+    void GLVideoContext::Prepare() {
+
+    }
+
+    void GLVideoContext::makeBackBuffer() {
         auto env = AppContext::Instance()->GetEnvironment();
-        if (gamePass == nullptr)
+        if (gamePass == nullptr) {
             gamePass = std::make_unique<GLShaderPass>(nullptr, nullptr);
-        gamePass->SetPixelFormat(env->pixelFormat);
-        gamePass->CreateFrameBuffer(env->gameGeometryWidth, env->gameGeometryHeight, true, env->renderUseDepth, env->renderUseStencil);
+            gamePass->SetPixelFormat(env->pixelFormat);
+            gamePass->CreateFrameBuffer(env->gameGeometryMaxWidth, env->gameGeometryMaxWidth, false, env->renderUseDepth, env->renderUseStencil);
+        }
+    }
+
+    void GLVideoContext::Reinit() {
+
     }
 }

@@ -12,7 +12,7 @@ namespace libRetroRunner {
     public:
         SoftwareInput();
 
-        ~SoftwareInput();
+        ~SoftwareInput() override;
 
         void Init() override;
 

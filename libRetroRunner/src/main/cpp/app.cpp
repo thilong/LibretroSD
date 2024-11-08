@@ -97,7 +97,7 @@ namespace libRetroRunner {
         AddCommand(AppCommands::kLoadContent);
         pthread_t thread;
         int loopRet = pthread_create(&thread, nullptr, libRetroRunner::appThread, this);
-        LOGD_APP("emu started, app: %p, thread result: %d" , this, loopRet);
+        LOGD_APP("emu started, app: %p, thread result: %d", this, loopRet);
     }
 
     void AppContext::Pause() {
@@ -127,13 +127,13 @@ namespace libRetroRunner {
                 if (BIT_TEST(state, AppState::kPaused)) {
                     //sleep for 16ms, for 60fps
                     usleep(16000);
-                    LOGD_APP("emu thread pased...");
                     continue;
                 }
                 processCommand();
                 //只有视频和内容都准备好了才能运行
                 if (BIT_TEST(state, AppState::kVideoReady) && BIT_TEST(state, AppState::kContentReady)) {
                     gVm->AttachCurrentThread(&env, nullptr);
+                    video->Prepare();
                     core->retro_run();
                     gVm->DetachCurrentThread();
                 } else {
@@ -152,6 +152,7 @@ namespace libRetroRunner {
     void AppContext::processCommand() {
         int command;
         while (commands.try_pop(command)) {
+            LOGW_APP("process command: %d", command);
             switch (command) {
                 case AppCommands::kLoadCore:
                     cmdLoadCore();
@@ -190,12 +191,7 @@ namespace libRetroRunner {
 
             core->retro_init();
 
-            //获取核心默认的尺寸
-            struct retro_system_av_info avInfo;
-            core->retro_get_system_av_info(&avInfo);
-            environment->gameGeometryWidth = avInfo.geometry.base_width;
-            environment->gameGeometryHeight = avInfo.geometry.base_height;
-            environment->gameGeometryAspectRatio = avInfo.geometry.aspect_ratio;
+
             BIT_SET(state, AppState::kCoreReady);
         } catch (std::exception &exception) {
             core = nullptr;
@@ -237,6 +233,18 @@ namespace libRetroRunner {
             throw std::runtime_error("Cannot load game");
         }
 
+        //获取核心默认的尺寸
+        struct retro_system_av_info avInfo;
+        core->retro_get_system_av_info(&avInfo);
+        environment->gameGeometryWidth = avInfo.geometry.base_width;
+        environment->gameGeometryHeight = avInfo.geometry.base_height;
+        environment->gameGeometryMaxWidth = avInfo.geometry.max_width;
+        environment->gameGeometryMaxHeight = avInfo.geometry.max_height;
+        environment->gameGeometryAspectRatio = avInfo.geometry.aspect_ratio;
+        environment->gameSampleRate = avInfo.timing.sample_rate;
+        environment->gameFps = avInfo.timing.fps;
+
+
         if (input == nullptr) {
             input = Input::NewInstance();
             input->Init();
@@ -269,7 +277,7 @@ namespace libRetroRunner {
     }
 
     /*-----Properties--------------------------------------------------------------*/
-    int AppContext::GetState() {
+    int AppContext::GetState() const {
         return state;
     }
 

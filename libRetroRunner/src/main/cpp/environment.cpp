@@ -5,6 +5,7 @@
 #include "libretro-common/include/libretro.h"
 #include "rr_log.h"
 #include <EGL/egl.h>
+#include "retroarch_types.h"
 
 #include "app.h"
 #include "video.h"
@@ -12,14 +13,16 @@
 #define POINTER_VAL(_TYPE_) (*((_TYPE_*)data))
 #define LOGD_Env(...) LOGD("[Environment] "  __VA_ARGS__)
 #define LOGW_Env(...) LOGW("[Environment] "  __VA_ARGS__)
+
 namespace libRetroRunner {
-    void
-    Environment::UpdateVariable(const std::string &key, const std::string &value, bool notifyCore) {
+
+    void Environment::UpdateVariable(const std::string &key, const std::string &value, bool notifyCore) {
 
     }
 
     Environment::Environment() {
         pixelFormat = RETRO_PIXEL_FORMAT_UNKNOWN;
+        renderUseHWAcceleration = false;
     }
 
     Environment::~Environment() {
@@ -65,7 +68,8 @@ namespace libRetroRunner {
                 diskControllerCallback = static_cast<retro_disk_control_callback *>(data);
                 return true;
             }
-            case RETRO_ENVIRONMENT_SET_HW_RENDER: {
+            case RETRO_ENVIRONMENT_SET_HW_RENDER:
+            case RETRO_ENVIRONMENT_SET_HW_RENDER | RETRO_ENVIRONMENT_EXPERIMENTAL: {
                 return cmdSetHardwareRender(data);
             }
             case RETRO_ENVIRONMENT_GET_VARIABLE: {
@@ -144,8 +148,9 @@ namespace libRetroRunner {
                 return !savePath.empty();
             }
             case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO: {
-                LOGD_Env("call RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO");
-                return cmdSetGeometry(data);
+                //用于通知前端视频与音频参数发生变化，在可能的情况下，前端可以重新初始化视频与音频上下文 ，
+                //这个回调不能用于通知游戏画面大小变化。，应当使用RETRO_ENVIRONMENT_SET_GEOMETRY
+                return cmdSetSystemAudioVideoInfo(data);
             }
             case RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK: {
                 LOGD_Env("call RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK -> [NO IMPL]");
@@ -167,6 +172,7 @@ namespace libRetroRunner {
             }
             case RETRO_ENVIRONMENT_SET_GEOMETRY: {
                 LOGD_Env("call RETRO_ENVIRONMENT_SET_GEOMETRY");
+                //通知游戏画面内容大小发生变化。 不能在这个回调中改变渲染上下文环境
                 return cmdSetGeometry(data);
             }
             case RETRO_ENVIRONMENT_GET_USERNAME: {
@@ -412,8 +418,12 @@ namespace libRetroRunner {
                 LOGD_Env("call RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY -> [NO IMPL]");
                 return false;
             }
+            case RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND:{
+                //用于通知前端在后台存储存档的状态
+                break;
+            }
             default:
-                LOGD_Env("not handled: %d -> false  -> [NO IMPL]", cmd);
+                LOGD_Env("not handled: %d, %x -> false  -> [NO IMPL]", cmd, cmd);
                 break;
         }
         return false;
@@ -503,8 +513,6 @@ namespace libRetroRunner {
     }
 
     uintptr_t Environment::CoreCallbackGetCurrentFrameBuffer() {
-        //TODO:已经被标记为过时，前端不应该返回预先分配的缓冲区、
-        //如果返回，应该返回最大的像素环境
         uintptr_t ret = 0;
         auto appContext = AppContext::Instance();
         if (appContext) {
@@ -516,8 +524,7 @@ namespace libRetroRunner {
         return ret;
     }
 
-    bool Environment::CoreCallbackSetRumbleState(unsigned int port, enum retro_rumble_effect effect,
-                                                 uint16_t strength) {
+    bool Environment::CoreCallbackSetRumbleState(unsigned int port, enum retro_rumble_effect effect, uint16_t strength) {
         return false;
     }
 
@@ -545,8 +552,7 @@ namespace libRetroRunner {
         }
     }
 
-    void Environment::CoreCallbackNotifyAudioState(bool active, unsigned int occupancy,
-                                                   bool underrun_likely) {
+    void Environment::CoreCallbackNotifyAudioState(bool active, unsigned int occupancy, bool underrun_likely) {
         //TODO: 核心通知前端音频状态
     }
 
@@ -555,9 +561,29 @@ namespace libRetroRunner {
         return (retro_proc_address_t) eglGetProcAddress(sym);
     }
 
-    bool Environment::cmdSetGeometry(void *data) {
-        //TODO: 是否需要处理最大屏幕尺寸
 
+    bool Environment::cmdSetSystemAudioVideoInfo(void *data) {
+        if (!data) {
+            LOGD_Env("call RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO -> no input data");
+            return false;
+        }
+        auto avInfo = static_cast<const struct retro_system_av_info *>(data);
+        //TODO: 当尺寸，刷新率不一样时，需要重新初始化上下文
+        __unused bool needReinitVideo = (avInfo->geometry.max_height != gameGeometryMaxHeight || avInfo->geometry.max_width != gameGeometryMaxWidth);
+        gameGeometryMaxWidth = avInfo->geometry.max_width;
+        gameGeometryMaxHeight = avInfo->geometry.max_height;
+        gameGeometryHeight = avInfo->geometry.base_height;
+        gameGeometryWidth = avInfo->geometry.base_width;
+        gameGeometryAspectRatio = avInfo->geometry.aspect_ratio;
+        LOGD_Env("call RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO -> size: %d x %d", gameGeometryMaxWidth, gameGeometryMaxHeight);
+
+        //音频参数
+        gameSampleRate = avInfo->timing.sample_rate;
+        gameFps = avInfo->timing.fps;
+        return true;
+    }
+
+    bool Environment::cmdSetGeometry(void *data) {
         auto geometry = static_cast<struct retro_game_geometry *>(data);
         LOGD_Env("Environment::cmdSetGeometry %u x %u, max: %u x %u", geometry->base_width,
                  geometry->base_height, geometry->max_width, geometry->max_height);
@@ -565,7 +591,7 @@ namespace libRetroRunner {
         gameGeometryWidth = geometry->base_height;
         gameGeometryAspectRatio = geometry->aspect_ratio;
 
-        //游戏的视频几何尺寸已经更新，需要创建新的渲染Buffer
+        //游戏内容尺寸变化，不影响上下文 ，只影响输出效果
         auto appContext = AppContext::Instance();
         if (appContext) {
             auto video = appContext->GetVideo();

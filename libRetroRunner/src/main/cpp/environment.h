@@ -16,7 +16,9 @@ namespace libRetroRunner {
 
     class Environment {
         friend class AppContext;
+
         friend class VideoContext;
+
         friend class GLVideoContext;
 
     public:
@@ -40,7 +42,7 @@ namespace libRetroRunner {
 
         static void CoreCallbackNotifyAudioState(bool active, unsigned occupancy, bool underrun_likely);
 
-        static retro_proc_address_t CoreCallbackGetProcAddress(const char* sym);
+        static retro_proc_address_t CoreCallbackGetProcAddress(const char *sym);
 
     private:
         bool cmdSetPixelFormat(void *data);
@@ -52,6 +54,9 @@ namespace libRetroRunner {
         bool cmdSetVariables(void *data);
 
         bool cmdSetVariable(void *data);
+
+
+        bool cmdSetSystemAudioVideoInfo(void *data);
 
         bool cmdSetGeometry(void *data);
 
@@ -69,26 +74,29 @@ namespace libRetroRunner {
         bool fastForwarding = false;
         unsigned int maxUserCount = 4;
 
-        bool coreSupportNoGame;
+        bool coreSupportNoGame = true;
 
-        int pixelFormat;
+        int pixelFormat = RETRO_PIXEL_FORMAT_XRGB8888;
 
-        int renderContextType;
-        unsigned int renderMajorVersion;
-        unsigned int renderMinorVersion;
+        int renderContextType = -1;
+        unsigned int renderMajorVersion = 0;
+        unsigned int renderMinorVersion = 0;
 
-        bool renderUseHWAcceleration;
-        bool renderUseDepth;
-        bool renderUseStencil;
+        bool renderUseHWAcceleration = false;
+        bool renderUseDepth = false;
+        bool renderUseStencil = false;
 
         retro_hw_context_reset_t renderContextReset = nullptr;
-        retro_hw_context_reset_t renderContextDestroy= nullptr;
+        retro_hw_context_reset_t renderContextDestroy = nullptr;
 
         unsigned int gameGeometryHeight = 0;
         unsigned int gameGeometryWidth = 0;
         unsigned int gameGeometryMaxHeight = 0;
         unsigned int gameGeometryMaxWidth = 0;
         float gameGeometryAspectRatio;
+
+        double gameFps;
+        double gameSampleRate;
 
         retro_disk_control_callback *diskControllerCallback;
     };

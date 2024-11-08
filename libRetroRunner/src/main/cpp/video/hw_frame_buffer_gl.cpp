@@ -28,24 +28,30 @@ namespace libRetroRunner {
     void GLHardwareFrameBuffer::Create(bool includeDepth, bool includeStencil) {
         Destroy();
         depth = includeDepth;
+        buffer = new uint32_t[width * height];
+
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         //create texture for fbo
         glGenTextures(1, &texture_id);
+
         glBindTexture(GL_TEXTURE_2D, texture_id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linear ? GL_LINEAR : GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8_OES, width, height);
+        //glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8_OES, width, height);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8_OES, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
 
         glGenFramebuffers(1, &frame_buffer);
-
         if (depth) {
             glGenRenderbuffers(1, &depth_buffer);
         }
-
         glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+
+
         if (depth) {
             glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
             glRenderbufferStorage(
@@ -54,6 +60,7 @@ namespace libRetroRunner {
                     width,
                     height
             );
+
             glFramebufferRenderbuffer(
                     GL_FRAMEBUFFER,
                     GL_DEPTH_ATTACHMENT,
@@ -63,7 +70,7 @@ namespace libRetroRunner {
             if (includeStencil) {
                 glFramebufferRenderbuffer(
                         GL_FRAMEBUFFER,
-                        GL_DEPTH_STENCIL_ATTACHMENT,
+                        GL_STENCIL_ATTACHMENT,
                         GL_RENDERBUFFER,
                         depth_buffer
                 );
@@ -83,6 +90,10 @@ namespace libRetroRunner {
     }
 
     void GLHardwareFrameBuffer::Destroy() {
+        if (buffer) {
+            delete[] buffer;
+            buffer = nullptr;
+        }
         if (depth_buffer > 0) {
             glDeleteRenderbuffers(1, &depth_buffer);
             depth_buffer = 0;

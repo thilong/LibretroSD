@@ -31,11 +31,11 @@ namespace libRetroRunner {
         GLuint GetTexture();
 
     public:
-        inline unsigned GetWidth() {
+        inline unsigned GetWidth() const {
             return width;
         }
 
-        inline unsigned GetHeight() {
+        inline unsigned GetHeight() const {
             return height;
         }
 
@@ -50,6 +50,8 @@ namespace libRetroRunner {
         GLuint depth_buffer = 0;
         unsigned width = 0;
         unsigned height = 0;
+
+        uint32_t *buffer = nullptr;
 
     };
 }

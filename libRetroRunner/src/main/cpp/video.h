@@ -22,9 +22,11 @@ namespace libRetroRunner {
         static std::unique_ptr<VideoContext> NewInstance();
 
         virtual void Init() = 0;
-
+        virtual void Reinit() = 0;
         virtual void Destroy() = 0;
 
+        //用于每一帧模拟前的准备
+        virtual void Prepare() = 0;
         virtual void DrawFrame() = 0;
 
         virtual void OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) = 0;

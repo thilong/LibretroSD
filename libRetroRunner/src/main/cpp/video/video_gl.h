@@ -21,10 +21,11 @@ namespace libRetroRunner {
     public:
         GLVideoContext();
 
-        ~GLVideoContext();
+        ~GLVideoContext() override;
 
 
         void Init() override;
+        void Reinit() override;
 
         void Destroy() override;
 
@@ -34,6 +35,8 @@ namespace libRetroRunner {
 
         void OnGameGeometryChanged() override;
 
+        void Prepare() override;
+
         void OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) override;
 
         void DrawFrame() override;
@@ -42,7 +45,7 @@ namespace libRetroRunner {
 
     private:
         bool eglContextMakeCurrent();
-
+        void makeBackBuffer();
     private:
         int current_width;
         int current_height;
