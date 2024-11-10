@@ -116,6 +116,7 @@ namespace libRetroRunner {
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
         GL_CHECK("glTexSubImage2D");
         glBindTexture(GL_TEXTURE_2D, 0);
+
     }
 
     void SoftwareTextureBuffer::Destroy() {

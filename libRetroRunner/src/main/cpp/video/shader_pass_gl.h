@@ -5,7 +5,7 @@
 #ifndef _SHADER_PASS_GL_H
 #define _SHADER_PASS_GL_H
 
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <string>
 #include "hw_frame_buffer_gl.h"
 

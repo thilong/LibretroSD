@@ -6,8 +6,8 @@
 
 #include <android/native_window_jni.h>
 #include <android/native_window.h>
-#include <GLES3/gl3.h>
-#include <GLES3/gl32.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -22,7 +22,7 @@
 #define LOGW_GLVIDEO(...) LOGW("[VIDEO] " __VA_ARGS__)
 #define LOGE_GLVIDEO(...) LOGE("[VIDEO] " __VA_ARGS__)
 #define LOGI_GLVIDEO(...) LOGI("[VIDEO] " __VA_ARGS__)
-#define HAVE_GLES3 1
+
 #define ENABLE_GL_DEBUG 1
 
 namespace libRetroRunner {
@@ -90,10 +90,11 @@ namespace libRetroRunner {
 #if defined(HAVE_GLES3) && (ENABLE_GL_DEBUG)
         initializeGLESLogCallbackIfNeeded();
 #endif
+        makeBackBuffer();
         auto appContext = AppContext::Instance();
         auto env = appContext->GetEnvironment();
         if (env->renderUseHWAcceleration) {
-            makeBackBuffer();
+
             env->renderContextReset();
         }
         is_ready = true;
@@ -140,13 +141,14 @@ namespace libRetroRunner {
             return;
         }
         eglDisplay = display;
+        //2:EGL_OPENGL_ES2_BIT   3:EGL_OPENGL_ES3_BIT_KHR
         const EGLint atrrs[] = {
                 EGL_ALPHA_SIZE, 8,
                 EGL_RED_SIZE, 8,
                 EGL_BLUE_SIZE, 8,
                 EGL_GREEN_SIZE, 8,
                 EGL_DEPTH_SIZE, 16,
-                EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
+                EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
                 EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                 EGL_NONE
         };
@@ -158,7 +160,7 @@ namespace libRetroRunner {
             return;
         }
 
-        EGLint attributes[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
+        EGLint attributes[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
         eglContext = eglCreateContext(display, eglConfig, nullptr, attributes);
         if (!eglContext) {
             LOGE_GLVIDEO("eglCreateContext failed.");
@@ -177,7 +179,7 @@ namespace libRetroRunner {
                 EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
                 EGL_NONE,
         };
-        eglSurface = eglCreateWindowSurface(display, eglConfig, window, 0);
+        eglSurface = eglCreateWindowSurface(display, eglConfig, window, window_attribs);
         if (!eglSurface) {
             LOGE_GLVIDEO("eglCreateWindowSurface failed.");
             return;
@@ -200,6 +202,7 @@ namespace libRetroRunner {
                 //把核心渲染的数据写入到gameTexture上
                 gameTexture->WriteTextureData(data, width, height, appContext->GetEnvironment()->pixelFormat);
 
+                /*
                 if (softwareRender == nullptr) {
                     softwareRender = std::make_unique<SoftwareRender>();
                     GL_CHECK2("gameRender->Create", "frame: %llu", frame_count);
@@ -208,10 +211,11 @@ namespace libRetroRunner {
                 //渲染(Test)
                 softwareRender->Render(current_width, current_height, gameTexture->GetTexture());
                 GL_CHECK2("gameRender->Render", "frame: %llu", frame_count);
-
-                //gamePass->DrawTexture(gameTexture->GetTexture());
+                eglSwapBuffers(eglDisplay, eglSurface);
+                */
+                gamePass->DrawTexture(gameTexture->GetTexture());
             }
-            //DrawFrame();
+            DrawFrame();
         }
         frame_count++;
     }
@@ -226,6 +230,7 @@ namespace libRetroRunner {
 
             //LOGD_GLVIDEO("draw frame: %d x %d, thread: %d", current_width, current_height, gettid());
             gamePass->DrawToScreen(current_width, current_height);
+            eglSwapBuffers(eglDisplay, eglSurface);
 
             if (false) {  //只在硬件渲染下使用，用于每一帧的清理
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);

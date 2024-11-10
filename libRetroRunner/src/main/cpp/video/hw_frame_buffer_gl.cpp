@@ -2,7 +2,7 @@
 // Created by aidoo on 2024/11/5.
 //
 #include "hw_frame_buffer_gl.h"
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include "../rr_log.h"
 #include <stdexcept>
 
@@ -53,10 +53,12 @@ namespace libRetroRunner {
 
 
         if (depth) {
+
+            // 2: GL_DEPTH24_STENCIL8_OES  , 3: GL_DEPTH24_STENCIL8
             glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
             glRenderbufferStorage(
                     GL_RENDERBUFFER,
-                    includeStencil ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT16,
+                    includeStencil ? GL_DEPTH24_STENCIL8_OES : GL_DEPTH_COMPONENT16,
                     width,
                     height
             );

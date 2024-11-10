@@ -21,7 +21,7 @@ public class RetroRunnerActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.onCreate(savedInstanceState);
 
-        String platform = "nes";
+        String platform = "dc";
         String testRom = "";
         String testCore = "";
         if (platform.equals("nes")) {
