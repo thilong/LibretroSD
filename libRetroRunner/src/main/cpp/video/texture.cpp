@@ -1,7 +1,7 @@
 //
 // Created by aidoo on 2024/11/5.
 //
-#include "software_texture_buffer.h"
+#include "texture.h"
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include "../libretro-common/include/libretro.h"
@@ -61,11 +61,11 @@ namespace libRetroRunner {
         }
     }
 
-    SoftwareTextureBuffer::~SoftwareTextureBuffer() {
+    GLTextureObject::~GLTextureObject() {
         Destroy();
     }
 
-    void SoftwareTextureBuffer::Create(unsigned int width, unsigned int height) {
+    void GLTextureObject::Create(unsigned int width, unsigned int height) {
         this->texture_width = width;
         this->texture_height = height;
         if (buffer) {
@@ -89,7 +89,7 @@ namespace libRetroRunner {
         LOGD_TB("texture created: %d, width:%u, height:%u", textureId, width, height);
     }
 
-    void SoftwareTextureBuffer::WriteTextureData(const void *data, unsigned int width, unsigned int height, int pixelFormat) {
+    void GLTextureObject::WriteTextureData(const void *data, unsigned int width, unsigned int height, int pixelFormat) {
         if (width != this->texture_width || height != this->texture_height) {
             if (buffer) {
                 delete[] buffer;
@@ -120,7 +120,7 @@ namespace libRetroRunner {
 
     }
 
-    void SoftwareTextureBuffer::Destroy() {
+    void GLTextureObject::Destroy() {
         if (buffer) {
             delete[] buffer;
             buffer = nullptr;

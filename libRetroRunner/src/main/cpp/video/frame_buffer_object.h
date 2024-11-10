@@ -2,19 +2,19 @@
 // Created by aidoo on 2024/11/5.
 //
 
-#ifndef _HW_FRAME_BUFFER_GL_H
-#define _HW_FRAME_BUFFER_GL_H
+#ifndef _FRAME_BUFFER_OBJECT_H
+#define _FRAME_BUFFER_OBJECT_H
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
 
 namespace libRetroRunner {
-    class GLHardwareFrameBuffer {
+    class GLFrameBufferObject {
     public:
-        GLHardwareFrameBuffer();
+        GLFrameBufferObject();
 
-        ~GLHardwareFrameBuffer();
+        ~GLFrameBufferObject();
 
         void SetSize(int w, int h);
 
@@ -50,8 +50,6 @@ namespace libRetroRunner {
         GLuint depth_buffer = 0;
         unsigned width = 0;
         unsigned height = 0;
-
-        uint32_t *buffer = nullptr;
 
     };
 }

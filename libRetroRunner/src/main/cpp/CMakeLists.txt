@@ -30,9 +30,9 @@ add_library(RetroRunner SHARED
         video.cpp
 
         video/video_gl.cpp
-        video/hw_frame_buffer_gl.cpp
-        video/software_texture_buffer.cpp
-        video/shader_pass_gl.cpp
+        video/frame_buffer_object.cpp
+        video/texture.cpp
+        video/shader_pass.cpp
 
         input/software_input.cpp
 

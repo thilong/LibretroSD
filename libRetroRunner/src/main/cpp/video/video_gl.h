@@ -10,8 +10,8 @@
 
 #include <EGL/egl.h>
 #include "../video.h"
-#include "shader_pass_gl.h"
-#include "software_texture_buffer.h"
+#include "shader_pass.h"
+#include "texture.h"
 
 namespace libRetroRunner {
 
@@ -23,13 +23,13 @@ namespace libRetroRunner {
 
         ~GLVideoContext() override;
 
-
         void Init() override;
+
         void Reinit() override;
 
         void Destroy() override;
 
-        void SetSurface(void *envObj, void *surfaceObj) override;
+        void SetHolder(void *envObj, void *surfaceObj) override;
 
         void SetSurfaceSize(unsigned int width, unsigned int height) override;
 
@@ -37,7 +37,7 @@ namespace libRetroRunner {
 
         void Prepare() override;
 
-        void OnFrameArrive(const void *data, unsigned int width, unsigned int height, size_t pitch) override;
+        void OnNewFrame(const void *data, unsigned int width, unsigned int height, size_t pitch) override;
 
         void DrawFrame() override;
 
@@ -45,7 +45,9 @@ namespace libRetroRunner {
 
     private:
         bool eglContextMakeCurrent();
-        void makeBackBuffer();
+
+        void createPassChain();
+
     private:
         int current_width;
         int current_height;
@@ -53,15 +55,12 @@ namespace libRetroRunner {
         uint64_t frame_count;
 
         //游戏渲染目标
-        std::unique_ptr<SoftwareTextureBuffer> gameTexture;  //用于非硬件加速的模拟核心渲染
-        std::unique_ptr<GLShaderPass> gamePass;
-
-        std::vector<std::unique_ptr<GLShaderPass> > shaderPasses;
+        std::unique_ptr<GLTextureObject> gameTexture;  //用于非硬件加速的模拟核心渲染
+        std::vector<std::unique_ptr<GLShaderPass> > passes = std::vector<std::unique_ptr<GLShaderPass>>();  //总是会有1个pass,第0个用于游戏画面的渲染
 
         EGLDisplay eglDisplay;
         EGLSurface eglSurface;
         EGLContext eglContext;
-        int internalPixelFormat;
 
         bool is_ready;
     };

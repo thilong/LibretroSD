@@ -2,16 +2,16 @@
 // Created by aidoo on 2024/11/5.
 //
 
-#ifndef _SOFTWARE_TEXTURE_BUFFER_H
-#define _SOFTWARE_TEXTURE_BUFFER_H
+#ifndef _TEXTURE_H
+#define _TEXTURE_H
 
 
 namespace libRetroRunner {
-    class SoftwareTextureBuffer {
+    class GLTextureObject {
     public :
-        SoftwareTextureBuffer() = default;
+        GLTextureObject() = default;
 
-        ~SoftwareTextureBuffer();
+        ~GLTextureObject();
 
         void Create(unsigned int width, unsigned int height);
 

@@ -77,7 +77,7 @@ namespace libRetroRunner {
             LOGW_APP("create new video component");
             //create video
             this->video = VideoContext::NewInstance();
-            this->video->SetSurface(args[0], args[1]);
+            this->video->SetHolder(args[0], args[1]);
             this->AddCommand(AppCommands::kInitVideo);
         }
     }
@@ -135,6 +135,7 @@ namespace libRetroRunner {
                     gVm->AttachCurrentThread(&env, nullptr);
                     video->Prepare();
                     core->retro_run();
+                    //video->DrawFrame();
                     gVm->DetachCurrentThread();
                 } else {
                     usleep(16000);
@@ -302,7 +303,7 @@ namespace libRetroRunner {
         AppContext *appContext = AppContext::Instance();
         if (appContext) {
             VideoContext *video = appContext->GetVideo();
-            if (video) video->OnFrameArrive(data, width, height, pitch);
+            if (video) video->OnNewFrame(data, width, height, pitch);
         }
     }
 

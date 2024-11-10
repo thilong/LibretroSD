@@ -1,7 +1,7 @@
 //
 // Created by aidoo on 2024/11/5.
 //
-#include "shader_pass_gl.h"
+#include "shader_pass.h"
 #include "../rr_log.h"
 #include "../libretro-common/include/libretro.h"
 
@@ -36,6 +36,26 @@ namespace libRetroRunner {
                 gl_FragColor = texture2D(u_texture, v_texCoord);
             }
             )delimiter";
+
+    GLfloat gBufferObjectData[24] = {
+            -1.0F, -1.0F, 0.0F, 0.0F,  //左下
+            -1.0F, +1.0F, 0.0F, 1.0F, //左上
+            +1.0F, +1.0F, 1.0F, 1.0F, //右上
+            +1.0F, -1.0F, 1.0F, 0.0F, //右下
+
+            -1.0F, -1.0F, 0.0F, 0.0F, //左下
+            -1.0F, +1.0F, 0.0F, 1.0F, //左上
+    };
+
+    GLfloat gFlipBufferObjectData[24] = {
+            -1.0F, -1.0F,  0.0F, 1.0F,
+            -1.0F, +1.0F,  0.0F, 0.0F,
+            +1.0F, +1.0F,  1.0F, 0.0F,
+            +1.0F, -1.0F,  1.0F, 1.0F,
+
+            -1.0F, -1.0F,  0.0F, 1.0F,
+            -1.0F, +1.0F,  0.0F, 0.0F,
+    };
 
     GLfloat gTriangleVertices[12] = {
             -1.0F, -1.0F,   //左下
@@ -96,6 +116,19 @@ namespace libRetroRunner {
         }
         return shader;
     }
+
+    static GLuint _createFullViewFBOs() {
+        GLuint buffer = 0;
+        glGenBuffers(1, &buffer);
+        if (buffer == 0) {
+            LOGE_SP("create buffer failed.");
+            return 0;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(gBufferObjectData), gBufferObjectData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        return buffer;
+    }
 }
 
 //GLShaderPass定义
@@ -152,6 +185,10 @@ namespace libRetroRunner {
     }
 
     void GLShaderPass::Destroy() {
+        if (vertexBuffer) {
+            glDeleteBuffers(1, &vertexBuffer);
+            vertexBuffer = 0;
+        }
         if (programId) {
             glDeleteProgram(programId);
             programId = 0;
@@ -176,11 +213,13 @@ namespace libRetroRunner {
             LOGW_SP("frame buffer not change, reuse it.");
             return;
         }
-        frameBuffer = std::make_unique<GLHardwareFrameBuffer>();
+        frameBuffer = std::make_unique<GLFrameBufferObject>();
         frameBuffer->SetSize(width, height);
         frameBuffer->SetLinear(linear);
         frameBuffer->Create(includeDepth, includeStencil);
         GL_CHECK("GLShaderPass::CreateFrameBuffer");
+
+        vertexBuffer = _createFullViewFBOs();
     }
 
     void GLShaderPass::DrawToScreen(unsigned int viewWidth, unsigned int viewHeight) {
@@ -189,6 +228,7 @@ namespace libRetroRunner {
 
     //如果textureId大于0，则表示把textureId的内容绘制到frameBuffer上
     //否则，直接绘制frameBuffer的内容到屏幕上
+    //这里应该添加大小，位置，旋转等控制
     void GLShaderPass::DrawTexture(GLuint textureId, unsigned viewWidth, unsigned viewHeight) {
         bool renderToScreen = textureId == 0;
         if (!renderToScreen)   //如果不是渲染到屏幕，则绘制到当前这个frameBuffer上
@@ -202,15 +242,18 @@ namespace libRetroRunner {
         if (viewHeight == 0) viewHeight = frameBuffer->GetHeight();
         glViewport(0, 0, viewWidth, viewHeight);
 
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+
         //set position
         glEnableVertexAttribArray(attr_position);
-        glVertexAttribPointer(attr_position, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
+        //glVertexAttribPointer(attr_position, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
+        glVertexAttribPointer(attr_position, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
 
         //set vertex
         glEnableVertexAttribArray(attr_coordinate);
         //如果是渲染到屏幕，因为opengl(左下为原点)与libretro(左上为原点)的图像坐标系不一样的原因，需要翻转图片
-        glVertexAttribPointer(attr_coordinate, 2, GL_FLOAT, GL_FALSE, 0, renderToScreen ? gFlipTextureCoords : gTextureCoords);
-
+        //glVertexAttribPointer(attr_coordinate, 2, GL_FLOAT, GL_FALSE, 0, renderToScreen ? gFlipTextureCoords : gTextureCoords);
+        glVertexAttribPointer(attr_coordinate, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *) (2 * sizeof(GLfloat)));
         //set texture
         glActiveTexture(GL_TEXTURE0);
         if (renderToScreen) {
@@ -227,6 +270,7 @@ namespace libRetroRunner {
         glDisableVertexAttribArray(attr_coordinate);
 
         glUseProgram(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }

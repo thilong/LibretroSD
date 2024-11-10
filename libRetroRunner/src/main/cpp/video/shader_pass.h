@@ -2,12 +2,12 @@
 // Created by aidoo on 2024/11/5.
 //
 
-#ifndef _SHADER_PASS_GL_H
-#define _SHADER_PASS_GL_H
+#ifndef _SHADER_PASS_H
+#define _SHADER_PASS_H
 
 #include <GLES2/gl2.h>
 #include <string>
-#include "hw_frame_buffer_gl.h"
+#include "frame_buffer_object.h"
 
 namespace libRetroRunner {
     class GLShaderPass {
@@ -84,7 +84,7 @@ namespace libRetroRunner {
         }
 
     private:
-        std::unique_ptr<GLHardwareFrameBuffer> frameBuffer;
+        std::unique_ptr<GLFrameBufferObject> frameBuffer;
 
         unsigned int pixelFormat;
 
@@ -95,6 +95,8 @@ namespace libRetroRunner {
         GLuint attr_position;
         GLuint attr_coordinate;
         GLuint attr_texture;
+
+        GLuint vertexBuffer;
     };
 
 
