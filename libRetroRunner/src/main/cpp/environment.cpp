@@ -287,7 +287,7 @@ namespace libRetroRunner {
             case RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER: {
                 //返回前端所期望的硬件渲染类型
                 LOGD_Env("call RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER");
-                POINTER_VAL(retro_hw_context_type) = RETRO_HW_CONTEXT_OPENGLES3;
+                POINTER_VAL(retro_hw_context_type) = RETRO_HW_CONTEXT_OPENGLES2;
                 return true;
             }
             case RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION: {

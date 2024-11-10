@@ -2,7 +2,8 @@
 // Created by aidoo on 2024/11/5.
 //
 #include "software_texture_buffer.h"
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #include "../libretro-common/include/libretro.h"
 #include "../rr_log.h"
 
@@ -80,7 +81,7 @@ namespace libRetroRunner {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linear ? GL_LINEAR : GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8_OES, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
         GL_CHECK("glTexImage2D");
 
         glBindTexture(GL_TEXTURE_2D, 0);
