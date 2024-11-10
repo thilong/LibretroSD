@@ -66,7 +66,6 @@ namespace libRetroRunner {
 }
 
 namespace libRetroRunner {
-    static std::unique_ptr<SoftwareRender> softwareRender = nullptr;
 
     GLVideoContext::GLVideoContext() : VideoContext() {
         is_ready = false;
@@ -74,8 +73,8 @@ namespace libRetroRunner {
         eglDisplay = nullptr;
         eglSurface = nullptr;
         frame_count = 0;
-        current_height = 0;
-        current_height = 0;
+        screen_height = 0;
+        screen_height = 0;
     }
 
     GLVideoContext::~GLVideoContext() {
@@ -83,8 +82,8 @@ namespace libRetroRunner {
     }
 
     void GLVideoContext::Init() {
-        if (!eglContextMakeCurrent()) {
-            LOGE_GLVIDEO("video init failed, this may cause render error.");
+        if (eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext) != EGL_TRUE) {
+            LOGE("eglMakeCurrent failed.");
             return;
         }
 
@@ -201,7 +200,7 @@ namespace libRetroRunner {
                 //把核心渲染的数据写入到gameTexture上
                 gameTexture->WriteTextureData(data, width, height, appContext->GetEnvironment()->pixelFormat);
 
-                passes[0]->DrawTexture(gameTexture->GetTexture(), 0, 0);
+                passes[0]->FillTexture(gameTexture->GetTexture());
             }
             DrawFrame();
         }
@@ -210,32 +209,23 @@ namespace libRetroRunner {
 
     void GLVideoContext::DrawFrame() {
 
-        if (current_width == 0 || current_height == 0) {
-            LOGW_GLVIDEO("draw frame failed: current_width or current_height is 0.");
+        if (screen_width == 0 || screen_height == 0) {
+            LOGW_GLVIDEO("draw frame failed: screen_width or screen_height is 0.");
             return;
         }
         do {
-            if (false) {
-                GLShaderPass *gamePass = passes.begin()->get();
-                glBindFramebuffer(GL_FRAMEBUFFER, gamePass->GetFrameBuffer());
-                glViewport(0, 0, gamePass->GetWidth(), gamePass->GetHeight());
-                glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            }
-
             //循环调用passes的DrawToScreen
             std::vector<std::unique_ptr<GLShaderPass> >::iterator pass;
             GLShaderPass *prePass = nullptr;
 
             for (pass = passes.begin(); pass != passes.end(); pass++) {
                 if (prePass != nullptr) {
-                    (*pass)->DrawTexture(prePass->GetTexture(), 0, 0);
+                    (*pass)->FillTexture(prePass->GetTexture());
                 }
                 prePass = pass->get();
             }
             if (!passes.empty())
-                passes.rbegin()->get()->DrawToScreen(current_width, current_height);
+                passes.rbegin()->get()->DrawOnScreen(screen_width, screen_height);
 
             eglSwapBuffers(eglDisplay, eglSurface);
 
@@ -251,7 +241,6 @@ namespace libRetroRunner {
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glBlendEquation(GL_FUNC_ADD);
                 glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                glViewport(0, 0, current_width, current_height);
             }
 
         } while ((false));
@@ -259,8 +248,8 @@ namespace libRetroRunner {
     }
 
     void GLVideoContext::SetSurfaceSize(unsigned int width, unsigned int height) {
-        current_width = width;
-        current_height = height;
+        screen_width = width;
+        screen_height = height;
     }
 
     unsigned int GLVideoContext::GetCurrentFramebuffer() {
@@ -270,20 +259,18 @@ namespace libRetroRunner {
         return passes[0]->GetFrameBuffer();
     }
 
-    bool GLVideoContext::eglContextMakeCurrent() {
-        if (eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext) != EGL_TRUE) {
-            LOGE("eglMakeCurrent failed.");
-            return false;
-        }
-        return true;
-    }
-
     void GLVideoContext::OnGameGeometryChanged() {
 
     }
 
     void GLVideoContext::Prepare() {
-
+        auto env = AppContext::Instance()->GetEnvironment();
+        if (env->gameGeometryChanged) {
+            createPassChain();
+            std::unique_ptr<GLShaderPass> *pass = &passes[0];
+            (*pass)->CreateFrameBuffer(env->gameGeometryWidth, env->gameGeometryHeight, env->renderUseLinear, env->renderUseDepth, env->renderUseStencil);
+            env->gameGeometryChanged = false;
+        }
     }
 
     void GLVideoContext::createPassChain() {
@@ -291,7 +278,7 @@ namespace libRetroRunner {
         if (passes.empty()) {
             std::unique_ptr<GLShaderPass> pass = std::make_unique<GLShaderPass>(nullptr, nullptr);
             pass->SetPixelFormat(env->pixelFormat);
-            pass->CreateFrameBuffer(env->gameGeometryMaxWidth, env->gameGeometryMaxWidth, false, env->renderUseDepth, env->renderUseStencil);
+            pass->CreateFrameBuffer(env->gameGeometryWidth, env->gameGeometryHeight, env->renderUseLinear, env->renderUseDepth, env->renderUseStencil);
             passes.push_back(std::move(pass));
         }
     }

@@ -135,7 +135,6 @@ namespace libRetroRunner {
                     gVm->AttachCurrentThread(&env, nullptr);
                     video->Prepare();
                     core->retro_run();
-                    //video->DrawFrame();
                     gVm->DetachCurrentThread();
                 } else {
                     usleep(16000);
@@ -239,8 +238,6 @@ namespace libRetroRunner {
         core->retro_get_system_av_info(&avInfo);
         environment->gameGeometryWidth = avInfo.geometry.base_width;
         environment->gameGeometryHeight = avInfo.geometry.base_height;
-        environment->gameGeometryMaxWidth = avInfo.geometry.max_width;
-        environment->gameGeometryMaxHeight = avInfo.geometry.max_height;
         environment->gameGeometryAspectRatio = avInfo.geometry.aspect_ratio;
         environment->gameSampleRate = avInfo.timing.sample_rate;
         environment->gameFps = avInfo.timing.fps;

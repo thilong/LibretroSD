@@ -21,11 +21,17 @@ namespace libRetroRunner {
 
         void CreateFrameBuffer(int width, int height, bool linear, bool includeDepth, bool includeStencil);
 
-        void DrawTexture(GLuint textureId , unsigned viewWidth = 0, unsigned viewHeight = 0);
+        /*把一张纹理拉伸满绘制到目标上*/
+        void FillTexture(GLuint textureId);
 
-        void DrawToScreen(unsigned viewWidth, unsigned viewHeight);
+        /*把当前绑定的FBO绘制到屏幕上*/
+        void DrawOnScreen(int width, int height);
+
+    private:
+        void drawTexture(GLuint textureId, int width = -1, int height = -1);
+
     public:
-        inline void SetPixelFormat(int format){
+        inline void SetPixelFormat(int format) {
             pixelFormat = format;
         }
 
@@ -96,27 +102,9 @@ namespace libRetroRunner {
         GLuint attr_coordinate;
         GLuint attr_texture;
 
-        GLuint vertexBuffer;
+        GLuint toFramebufferVertexBuffer = 0;
+        GLuint toScreenVertexBuffer = 0;
     };
 
-
-    //for test
-    class SoftwareRender {
-    public:
-        SoftwareRender();
-
-        ~SoftwareRender();
-
-        void Render(unsigned viewportWidth, unsigned viewportHeight, unsigned int textureId);
-
-    private:
-        GLuint programId = 0;
-        GLuint vertexShader = 0;
-        GLuint fragmentShader = 0;
-
-        GLuint attr_position;
-        GLuint attr_coordinate;
-        GLuint attr_texture;
-    };
 }
 #endif

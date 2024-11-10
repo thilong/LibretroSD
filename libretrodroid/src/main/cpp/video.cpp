@@ -30,6 +30,29 @@
 #include "renderers/es2/imagerendereres2.h"
 
 namespace libretrodroid {
+    GLfloat gBufferObjectData[24] = {
+            -1.0F, -1.0F, 0.0F, 0.0F,  //左下
+            -1.0F, +1.0F, 0.0F, 1.0F, //左上
+            +1.0F, +1.0F, 1.0F, 1.0F, //右上
+            +1.0F, -1.0F, 1.0F, 0.0F, //右下
+
+            -1.0F, -1.0F, 0.0F, 0.0F, //左下
+            -1.0F, +1.0F, 0.0F, 1.0F, //左上
+    };
+
+    static GLuint _createFullViewFBOs() {
+        GLuint buffer = 0;
+        glGenBuffers(1, &buffer);
+        if (buffer == 0) {
+            return 0;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(gBufferObjectData), gBufferObjectData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        return buffer;
+    }
+
+    GLuint testVertexBuffer = 0;
 
     static void printGLString(const char *name, GLenum s) {
         const char *v = (const char *) glGetString(s);
@@ -174,7 +197,9 @@ namespace libretrodroid {
 
         if (skipDuplicateFrames && !isDirty) return;
         isDirty = false;
-
+        if(testVertexBuffer == 0) {
+            testVertexBuffer = _createFullViewFBOs();
+        }
         glDisable(GL_DEPTH_TEST);
         //LOGE("glClearColor: %p", &glClearColor);
         for (int i = 0; i < shadersChain.size(); ++i) {
@@ -190,13 +215,13 @@ namespace libretrodroid {
             //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glUseProgram(shader.gProgram);
-
-            glVertexAttribPointer(shader.gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0,
-                                  gTriangleVertices);
+            glBindBuffer(GL_ARRAY_BUFFER, testVertexBuffer);
+            glVertexAttribPointer(shader.gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
+            //glVertexAttribPointer(shader.gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
             glEnableVertexAttribArray(shader.gvPositionHandle);
 
-            glVertexAttribPointer(shader.gvCoordinateHandle, 2, GL_FLOAT, GL_FALSE, 0,
-                                  gTextureCoords);
+            glVertexAttribPointer(shader.gvCoordinateHandle, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *) (2 * sizeof(GLfloat)));
+            //glVertexAttribPointer(shader.gvCoordinateHandle, 2, GL_FLOAT, GL_FALSE, 0, gTextureCoords);
             glEnableVertexAttribArray(shader.gvCoordinateHandle);
 
             glActiveTexture(GL_TEXTURE0);
@@ -218,13 +243,13 @@ namespace libretrodroid {
 
             glUniformMatrix4fv(shader.gViewModelMatrixHandle, 1, false, gViewModelMatrix);
 
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-
+            //glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
             glDisableVertexAttribArray(shader.gvPositionHandle);
             glDisableVertexAttribArray(shader.gvCoordinateHandle);
 
             glBindTexture(GL_TEXTURE_2D, 0);
-
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
             glUseProgram(0);
         };
     }

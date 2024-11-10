@@ -417,7 +417,7 @@ namespace libRetroRunner {
                 LOGD_Env("call RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY -> [NO IMPL]");
                 return false;
             }
-            case RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND:{
+            case RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND: {
                 //用于通知前端在后台存储存档的状态
                 break;
             }
@@ -567,14 +567,8 @@ namespace libRetroRunner {
             return false;
         }
         auto avInfo = static_cast<const struct retro_system_av_info *>(data);
-        //TODO: 当尺寸，刷新率不一样时，需要重新初始化上下文
-        __unused bool needReinitVideo = (avInfo->geometry.max_height != gameGeometryMaxHeight || avInfo->geometry.max_width != gameGeometryMaxWidth);
-        gameGeometryMaxWidth = avInfo->geometry.max_width;
-        gameGeometryMaxHeight = avInfo->geometry.max_height;
-        gameGeometryHeight = avInfo->geometry.base_height;
-        gameGeometryWidth = avInfo->geometry.base_width;
-        gameGeometryAspectRatio = avInfo->geometry.aspect_ratio;
-        LOGD_Env("call RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO -> size: %d x %d", gameGeometryMaxWidth, gameGeometryMaxHeight);
+
+        cmdSetGeometry((void *) &(avInfo->geometry));
 
         //音频参数
         gameSampleRate = avInfo->timing.sample_rate;
@@ -584,20 +578,12 @@ namespace libRetroRunner {
 
     bool Environment::cmdSetGeometry(void *data) {
         auto geometry = static_cast<struct retro_game_geometry *>(data);
-        LOGD_Env("Environment::cmdSetGeometry %u x %u, max: %u x %u", geometry->base_width,
-                 geometry->base_height, geometry->max_width, geometry->max_height);
-        gameGeometryHeight = geometry->base_width;
-        gameGeometryWidth = geometry->base_height;
+        gameGeometryChanged = (geometry->base_height != gameGeometryHeight || geometry->base_width != gameGeometryWidth);
+
+        gameGeometryWidth = geometry->base_width;
+        gameGeometryHeight = geometry->base_height;
         gameGeometryAspectRatio = geometry->aspect_ratio;
 
-        //游戏内容尺寸变化，不影响上下文 ，只影响输出效果
-        auto appContext = AppContext::Instance();
-        if (appContext) {
-            auto video = appContext->GetVideo();
-            if (video) {
-                video->OnGameGeometryChanged();
-            }
-        }
         return true;
     }
 

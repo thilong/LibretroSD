@@ -44,13 +44,12 @@ namespace libRetroRunner {
         unsigned int GetCurrentFramebuffer() override;
 
     private:
-        bool eglContextMakeCurrent();
 
         void createPassChain();
 
     private:
-        int current_width;
-        int current_height;
+        int screen_width;
+        int screen_height;
 
         uint64_t frame_count;
 

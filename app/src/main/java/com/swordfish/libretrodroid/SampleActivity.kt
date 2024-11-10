@@ -59,6 +59,7 @@ class SampleActivity : AppCompatActivity() {
             //coreFile = "libppsspp.so"
             gamePath = filesDir.absolutePath + "/bj.cdi"
             //gamePath = filesDir.absolutePath + "/roms/fl.iso"
+            FileUtil.copyFromAsses(this, "bj.cdi", gamePath)
         }
         //val gamePath = getExternalFilesDir(null)?.absolutePath + "a.nes"
         //FileUtil.copyFromAsses(this,"demo.nes",gamePath)

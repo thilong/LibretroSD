@@ -85,15 +85,15 @@ namespace libRetroRunner {
         bool renderUseHWAcceleration = false;
         bool renderUseDepth = false;
         bool renderUseStencil = false;
+        bool renderUseLinear = false;
 
         retro_hw_context_reset_t renderContextReset = nullptr;
         retro_hw_context_reset_t renderContextDestroy = nullptr;
 
         unsigned int gameGeometryHeight = 0;
         unsigned int gameGeometryWidth = 0;
-        unsigned int gameGeometryMaxHeight = 0;
-        unsigned int gameGeometryMaxWidth = 0;
         float gameGeometryAspectRatio;
+        bool gameGeometryChanged = false;
 
         double gameFps;
         double gameSampleRate;
