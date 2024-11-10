@@ -25,13 +25,13 @@ public class RetroRunnerView extends SurfaceView implements SurfaceHolder.Callba
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.e("RetroRunner", "surfaceCreated");
+        Log.w("RetroRunner", "surfaceCreated");
         NativeRunner.setSurface(holder.getSurface());
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.e("RetroRunner", "surfaceChanged " + width + "x" + height);
+        Log.w("RetroRunner", "surfaceChanged " + width + "x" + height);
         NativeRunner.setSurfaceSize(width, height);
     }
 

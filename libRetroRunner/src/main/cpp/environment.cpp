@@ -52,7 +52,6 @@ namespace libRetroRunner {
                 return !systemPath.empty();
             }
             case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: {
-                LOGD_Env("call RETRO_ENVIRONMENT_SET_PIXEL_FORMAT -> 1");
                 return cmdSetPixelFormat(data);
             }
             case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS: {
@@ -440,7 +439,7 @@ namespace libRetroRunner {
     bool Environment::cmdSetPixelFormat(void *data) {
         auto format = static_cast<enum retro_pixel_format *>(data);
         this->pixelFormat = *format;
-        LOGD_Env("game pixel format: %d", this->pixelFormat);
+        LOGD_Env("call RETRO_ENVIRONMENT_SET_PIXEL_FORMAT -> game pixel format : %d", this->pixelFormat);
         return true;
     }
 

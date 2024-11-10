@@ -53,7 +53,6 @@ namespace libRetroRunner {
         uint64_t frame_count;
 
         //游戏渲染目标
-        std::unique_ptr<SoftwareRender> gameRender;
         std::unique_ptr<SoftwareTextureBuffer> gameTexture;  //用于非硬件加速的模拟核心渲染
         std::unique_ptr<GLShaderPass> gamePass;
 

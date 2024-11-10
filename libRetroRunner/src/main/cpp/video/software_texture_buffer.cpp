@@ -2,10 +2,14 @@
 // Created by aidoo on 2024/11/5.
 //
 #include "software_texture_buffer.h"
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#include <GLES3/gl3.h>
 #include "../libretro-common/include/libretro.h"
 #include "../rr_log.h"
+
+#define LOGD_TB(...) LOGD("[VIDEO] " __VA_ARGS__)
+#define LOGW_TB(...) LOGW("[VIDEO] " __VA_ARGS__)
+#define LOGE_TB(...) LOGE("[VIDEO] " __VA_ARGS__)
+#define LOGI_TB(...) LOGI("[VIDEO] " __VA_ARGS__)
 
 namespace libRetroRunner {
 
@@ -22,6 +26,8 @@ namespace libRetroRunner {
     }
 
     void convertRGB565ToRGBA8888(const void *data, unsigned int width, unsigned int height, unsigned char *buffer) {
+        //LOGD_TB("convertRGB565ToRGBA8888: %d x %d", width, height);
+
         const unsigned short *src = (const unsigned short *) data;
         unsigned char *dst = buffer;
         for (unsigned int heightIdx = 0; heightIdx < height; heightIdx++) {
@@ -74,10 +80,12 @@ namespace libRetroRunner {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linear ? GL_LINEAR : GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8_OES, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
         GL_CHECK("glTexImage2D");
 
         glBindTexture(GL_TEXTURE_2D, 0);
+
+        LOGD_TB("texture created: %d, width:%u, height:%u", textureId, width, height);
     }
 
     void SoftwareTextureBuffer::WriteTextureData(const void *data, unsigned int width, unsigned int height, int pixelFormat) {

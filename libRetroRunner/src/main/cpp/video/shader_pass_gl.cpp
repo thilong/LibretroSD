@@ -143,6 +143,7 @@ namespace libRetroRunner {
             attr_position = glGetAttribLocation(program, "a_position");
             attr_coordinate = glGetAttribLocation(program, "a_texCoord");
             attr_texture = glGetUniformLocation(program, "u_texture");
+            LOGD_SP("shader pass created, program id: %d", programId);
         }
     }
 
@@ -274,6 +275,7 @@ namespace libRetroRunner {
             attr_position = glGetAttribLocation(program, "a_position");
             attr_coordinate = glGetAttribLocation(program, "a_texCoord");
             attr_texture = glGetUniformLocation(program, "u_texture");
+            LOGD_SP("software renderer created, program id: %d", programId);
         }
     }
 

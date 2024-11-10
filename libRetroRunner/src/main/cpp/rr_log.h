@@ -46,6 +46,8 @@ namespace libRetroRunner {
 #define GL_ERROR_STRING(_ERR_) \
     ((_ERR_ != 1280 && _ERR_ != 1282) ? glGetString(_ERR_) : (const GLubyte*)"GL_INVALID_ENUM")
 
+#define GL_ERROR_STRING2(_ERR_) glGetString(_ERR_)
+
 
 #define GL_CHECK(_FMT_) \
      do { \
